@@ -61,7 +61,34 @@
       '<button class="primary full" type="submit">Criar ambiente da empresa</button></form></section></div>';
   };
 
+  S.loadProfile = async function () {
+    var user = S.state.session && S.state.session.user;
+    if (!user) {
+      S.state.profile = null;
+      return null;
+    }
+
+    var res = await S.sb.from("profiles").select("id,full_name,avatar_path").eq("id", user.id).maybeSingle();
+    if (res.error) throw res.error;
+
+    var profile = res.data;
+    if (!profile) {
+      var created = await S.sb.from("profiles").insert({ id: user.id }).select("id,full_name,avatar_path").single();
+      if (created.error) throw created.error;
+      profile = created.data;
+    }
+
+    profile.avatar_url = null;
+    if (profile.avatar_path) {
+      var signed = await S.sb.storage.from("profile-photos").createSignedUrl(profile.avatar_path, 43200);
+      if (!signed.error && signed.data && signed.data.signedUrl) profile.avatar_url = signed.data.signedUrl;
+    }
+    S.state.profile = profile;
+    return profile;
+  };
+
   S.loadContext = async function () {
+    await S.loadProfile();
     var memberships = await S.sb.from("memberships").select("organization_id,role");
     if (memberships.error) throw memberships.error;
     var orgs = await S.sb.from("organizations").select("id,name,owner_user_id").order("name");
