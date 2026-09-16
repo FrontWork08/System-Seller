@@ -8,7 +8,7 @@
         {"key":"Referrer-Policy","value":"no-referrer"},
         {"key":"Permissions-Policy","value":"camera=(), microphone=(), geolocation=(), payment=()"},
         {"key":"Strict-Transport-Security","value":"max-age=63072000; includeSubDomains; preload"},
-        {"key":"Content-Security-Policy","value":"default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self'; img-src 'self' data:; connect-src 'self' https://tkdokwisgeqmflixvmff.supabase.co wss://tkdokwisgeqmflixvmff.supabase.co; font-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests"}
+        {"key":"Content-Security-Policy","value":"default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self'; img-src 'self' data: https://tkdokwisgeqmflixvmff.supabase.co; connect-src 'self' https://tkdokwisgeqmflixvmff.supabase.co wss://tkdokwisgeqmflixvmff.supabase.co; font-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests"}
       ]
     }
   ],
