@@ -69,6 +69,12 @@
     if (lower === "user already registered") return "Já existe uma conta com este e-mail.";
     if (lower.indexOf("email rate limit exceeded") !== -1) return "Limite temporário de e-mails atingido. O serviço de e-mail do Supabase está no limite; aguarde e tente novamente mais tarde.";
     if (lower.indexOf("for security purposes") !== -1 && lower.indexOf("60 seconds") !== -1) return "Aguarde um minuto antes de solicitar outro e-mail.";
+    if (lower.indexOf("insufficient role") !== -1) return "Sua permissão não permite executar esta ação.";
+    if (lower.indexOf("invite not found") !== -1) return "Este convite não existe ou não está mais disponível.";
+    if (lower.indexOf("invite revoked") !== -1) return "Este convite foi revogado.";
+    if (lower.indexOf("invite already used") !== -1) return "Este convite já foi utilizado.";
+    if (lower.indexOf("invite expired") !== -1) return "Este convite expirou. Peça um novo link ao administrador.";
+    if (lower.indexOf("only the owner can") !== -1) return "Somente o proprietário da empresa pode executar esta ação.";
     return message;
   };
 
