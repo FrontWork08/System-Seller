@@ -218,4 +218,120 @@
 
     S.modal("Pedido " + (o.external_id || o.id.slice(0, 8)), body, true);
   };
+  S.pageProfile = async function () {
+    var org = S.currentOrg();
+    var user = S.state.session.user;
+    var base = await Promise.all([
+      S.fetchAll("orders", "id,status,payment_status,total,due_at,sold_at,created_at", "created_at"),
+      S.fetchAll("products", "id,name,sku,cost,price,stock,min_stock,active", "name"),
+      S.sb.from("customers").select("id", { count: "exact", head: true }).eq("organization_id", S.state.orgId),
+      S.sb.from("stores").select("id,name,marketplace,integration_status,active").eq("organization_id", S.state.orgId).order("name")
+    ]);
+    if (base[2].error) throw base[2].error;
+    if (base[3].error) throw base[3].error;
+
+    var orders = base[0] || [];
+    var products = base[1] || [];
+    var customers = base[2].count || 0;
+    var stores = base[3].data || [];
+    var finance = [];
+
+    if (S.canAdmin()) {
+      finance = await S.fetchAll("financial_transactions", "kind,amount,status,occurred_on,created_at", "created_at");
+    }
+
+    var terminal = ["delivered", "cancelled"];
+    var openOrders = orders.filter(function (o) { return terminal.indexOf(o.status) === -1; });
+    var delivered = orders.filter(function (o) { return o.status === "delivered"; }).length;
+    var cancelled = orders.filter(function (o) { return o.status === "cancelled"; }).length;
+    var paidOrders = orders.filter(function (o) { return o.payment_status === "paid" && o.status !== "cancelled"; });
+    var pendingOrders = orders.filter(function (o) { return o.payment_status === "pending" && o.status !== "cancelled"; }).length;
+    var now = Date.now();
+    var overdue = openOrders.filter(function (o) {
+      return o.due_at && new Date(o.due_at).getTime() < now && o.status !== "shipped";
+    }).length;
+
+    var validOrders = orders.filter(function (o) { return o.status !== "cancelled"; });
+    var grossOrders = validOrders.reduce(function (sum, o) { return sum + Number(o.total || 0); }, 0);
+    var avgTicket = validOrders.length ? grossOrders / validOrders.length : 0;
+
+    var monthPrefix = S.todayIso().slice(0, 7);
+    var monthOrders = validOrders.filter(function (o) {
+      var date = o.sold_at || o.created_at;
+      return date && String(date).slice(0, 7) === monthPrefix;
+    });
+    var monthGross = monthOrders.reduce(function (sum, o) { return sum + Number(o.total || 0); }, 0);
+
+    var activeProducts = products.filter(function (x) { return x.active; });
+    var units = activeProducts.reduce(function (sum, x) { return sum + Number(x.stock || 0); }, 0);
+    var low = activeProducts.filter(function (x) { return Number(x.stock) <= Number(x.min_stock); }).length;
+    var stockCost = activeProducts.reduce(function (sum, x) { return sum + Number(x.stock || 0) * Number(x.cost || 0); }, 0);
+    var stockSale = activeProducts.reduce(function (sum, x) { return sum + Number(x.stock || 0) * Number(x.price || 0); }, 0);
+
+    var income = finance.filter(function (x) { return x.kind === "income" && x.status === "paid"; })
+      .reduce(function (sum, x) { return sum + Number(x.amount || 0); }, 0);
+    var expense = finance.filter(function (x) { return x.kind === "expense" && x.status === "paid"; })
+      .reduce(function (sum, x) { return sum + Number(x.amount || 0); }, 0);
+    var plannedExpense = finance.filter(function (x) { return x.kind === "expense" && x.status === "planned"; })
+      .reduce(function (sum, x) { return sum + Number(x.amount || 0); }, 0);
+
+    var activeStores = stores.filter(function (x) { return x.active; }).length;
+    var connectedStores = stores.filter(function (x) { return x.integration_status === "connected"; }).length;
+    var roleLabel = S.state.role === "owner" ? "Proprietário" : S.state.role === "admin" ? "Administrador" : S.state.role === "operator" ? "Operador" : "Visualização";
+    var initial = String(user.email || "U").charAt(0).toUpperCase();
+
+    var statusOrder = ["new", "picking", "packing", "ready", "shipped", "delivered", "cancelled"];
+    var maxStatus = Math.max(1, orders.length);
+    var statusBars = statusOrder.map(function (status) {
+      var qty = orders.filter(function (o) { return o.status === status; }).length;
+      var pct = Math.round((qty / maxStatus) * 100);
+      return '<div class="status-row"><div><span>' + S.e(S.statusLabel[status]) + '</span><b>' + qty + '</b></div><div class="status-track"><i style="width:' + pct + '%"></i></div></div>';
+    }).join("");
+
+    var storeRows = stores.length ? stores.map(function (x) {
+      var channel = x.marketplace === "mercado_livre" ? "Mercado Livre" : x.marketplace === "shopee" ? "Shopee" : x.marketplace === "manual" ? "Manual" : "Outro";
+      var state = x.integration_status === "connected" ? S.badge("Conectada", "ok") : S.badge("Sem integração");
+      return '<div class="list-item"><div><strong>' + S.e(x.name) + '</strong><div class="meta">' + S.e(channel) + '</div></div>' + state + '</div>';
+    }).join("") : '<div class="muted">Nenhuma loja cadastrada.</div>';
+
+    var accountCreated = user.created_at ? S.dt(user.created_at) : "—";
+    var lastSignIn = user.last_sign_in_at ? S.dt(user.last_sign_in_at) : "—";
+
+    var financeCards = S.canAdmin() ?
+      '<div class="metric"><span>Receitas pagas</span><strong class="money pos">' + S.money(income) + '</strong><small>Histórico financeiro</small></div>' +
+      '<div class="metric"><span>Despesas pagas</span><strong class="money neg">' + S.money(expense) + '</strong><small>Histórico financeiro</small></div>' +
+      '<div class="metric"><span>Saldo financeiro</span><strong>' + S.money(income - expense) + '</strong><small>Receitas menos despesas</small></div>' +
+      '<div class="metric"><span>Despesas planejadas</span><strong>' + S.money(plannedExpense) + '</strong><small>Ainda não pagas</small></div>' :
+      '<div class="profile-restricted">Os indicadores financeiros completos são exibidos somente para proprietário e administradores.</div>';
+
+    document.getElementById("page").innerHTML =
+      '<div class="page-head"><div><h2>Perfil e estatísticas</h2><p>Conta, empresa e visão consolidada da operação.</p></div><div class="actions">' +
+      '<button class="ghost" data-action="profile-reset-password">Alterar senha</button><button class="danger-btn" data-action="logout">Sair da conta</button></div></div>' +
+      '<section class="profile-hero"><div class="profile-avatar">' + S.e(initial) + '</div><div class="profile-main"><span class="profile-kicker">Conta ativa</span><h3>' + S.e(user.email || "Usuário") + '</h3><p>' + S.e(org ? org.name : "Empresa") + ' · ' + S.e(roleLabel) + '</p></div>' +
+      '<div class="profile-meta"><div><span>Conta criada</span><b>' + S.e(accountCreated) + '</b></div><div><span>Último acesso</span><b>' + S.e(lastSignIn) + '</b></div></div></section>' +
+
+      '<div class="section-title">Operação</div><div class="stats-grid">' +
+      '<div class="metric"><span>Pedidos totais</span><strong>' + orders.length + '</strong><small>' + openOrders.length + ' em andamento</small></div>' +
+      '<div class="metric"><span>Entregues</span><strong>' + delivered + '</strong><small>' + cancelled + ' cancelados</small></div>' +
+      '<div class="metric"><span>Prazo vencido</span><strong class="' + (overdue ? "overdue" : "") + '">' + overdue + '</strong><small>Precisam de atenção</small></div>' +
+      '<div class="metric"><span>Pagamento pendente</span><strong>' + pendingOrders + '</strong><small>' + paidOrders.length + ' pedidos pagos</small></div>' +
+      '<div class="metric"><span>Valor dos pedidos</span><strong>' + S.money(grossOrders) + '</strong><small>Exclui cancelados</small></div>' +
+      '<div class="metric"><span>Ticket médio</span><strong>' + S.money(avgTicket) + '</strong><small>Por pedido não cancelado</small></div>' +
+      '<div class="metric"><span>Pedidos no mês</span><strong>' + monthOrders.length + '</strong><small>' + S.money(monthGross) + ' em vendas</small></div>' +
+      '<div class="metric"><span>Clientes</span><strong>' + customers + '</strong><small>Cadastros da empresa</small></div></div>' +
+
+      '<div class="section-title">Estoque e catálogo</div><div class="stats-grid">' +
+      '<div class="metric"><span>Produtos ativos</span><strong>' + activeProducts.length + '</strong><small>' + products.length + ' cadastrados no total</small></div>' +
+      '<div class="metric"><span>Unidades em estoque</span><strong>' + units + '</strong><small>Somatório dos produtos ativos</small></div>' +
+      '<div class="metric"><span>Estoque baixo</span><strong class="' + (low ? "low" : "") + '">' + low + '</strong><small>No mínimo ou abaixo</small></div>' +
+      '<div class="metric"><span>Custo do estoque</span><strong>' + S.money(stockCost) + '</strong><small>Custo × quantidade</small></div>' +
+      '<div class="metric"><span>Valor potencial</span><strong>' + S.money(stockSale) + '</strong><small>Preço de venda × quantidade</small></div>' +
+      '<div class="metric"><span>Lojas ativas</span><strong>' + activeStores + '</strong><small>' + connectedStores + ' integrações conectadas</small></div></div>' +
+
+      '<div class="section-title">Financeiro</div><div class="stats-grid">' + financeCards + '</div>' +
+
+      '<div class="profile-layout"><section class="panel"><div class="panel-head"><h3>Distribuição dos pedidos</h3></div><div class="panel-body status-list">' + statusBars + '</div></section>' +
+      '<section class="panel"><div class="panel-head"><h3>Lojas da empresa</h3></div><div class="panel-body"><div class="list">' + storeRows + '</div></div></section></div>';
+  };
+
 })();
