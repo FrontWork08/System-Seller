@@ -23,3 +23,6 @@ RPCs públicas controladas:
 - update_order_metadata
 
 O Security Advisor foi executado depois das migrações sem alertas de segurança. O Performance Advisor não aponta mais foreign keys sem índice; em banco vazio, índices aparecem como unused até haver carga real.
+
+
+A Edge Function legada seller-storage foi aposentada: a versão atual exige JWT e responde 410, não lendo nem gravando o armazenamento antigo.
