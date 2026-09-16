@@ -54,7 +54,7 @@
       '<div class="field"><label>Loja</label><select name="store_id">' + stores + '</select></div>' +
       '<div class="field"><label>Cliente</label><select name="customer_id">' + customers + '</select></div>' +
       '<div class="field"><label>Código externo</label><input name="external_id" maxlength="120" placeholder="Ex.: ML-12345"></div>' +
-      '<div class="field"><label>Pagamento</label><select name="payment_status"><option value="pending">Pendente</option><option value="paid">Pago</option><option value="partial">Parcial</option></select></div>' +
+      '<div class="field"><label>Pagamento</label><select name="payment_status"><option value="pending">Pendente</option><option value="paid">Pago</option></select></div>' +
       '<div class="field"><label>Prazo de envio</label><input name="due_at" type="datetime-local"></div>' +
       '<div class="field"><label>Data da venda</label><input name="sold_at" type="datetime-local" value="' + S.localInput(new Date()) + '"></div>' +
       '<div class="field"><label>Frete</label><input name="shipping" type="number" min="0" step="0.01" value="0"></div>' +
