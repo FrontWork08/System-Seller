@@ -72,7 +72,9 @@
   };
 
   S.authRedirect = function (kind) {
-    var url = new URL(window.location.href);
+    var base = cfg.productionUrl || window.location.origin;
+    var url = new URL(base);
+    url.pathname = "/";
     url.hash = "";
     url.search = "";
     if (kind) url.searchParams.set("auth", kind);
