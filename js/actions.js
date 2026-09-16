@@ -426,10 +426,13 @@
         await S.pageTeam();
       } else if (a === "backup-workspace") {
         b.disabled = true;
-        await S.downloadWorkspaceBackup();
-        b.disabled = false;
-        S.toast("Backup JSON gerado.");
-        await S.pageBackup();
+        try {
+          await S.downloadWorkspaceBackup();
+          S.toast("Backup JSON gerado.");
+          await S.pageBackup();
+        } finally {
+          b.disabled = false;
+        }
       } else if (a === "export") {
         await S.exportKind(b.dataset.kind);
         S.toast("Arquivo CSV gerado.");
@@ -483,6 +486,7 @@
         S.state.orgId = t.value;
         S.state.role = S.state.roles[S.state.orgId];
         S.state.page = "dashboard";
+        S.state.orderQuery = { page: 0, size: 50, search: "", status: "" };
         S.state.data = {};
         S.renderShell();
         await S.loadPage();
