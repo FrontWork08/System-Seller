@@ -2,6 +2,7 @@
   "use strict";
 
   var cfg = window.SYSTEM_SELLER_CONFIG;
+  var authMarker = new URL(window.location.href).searchParams.get("auth");
   var sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabasePublishableKey, {
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
   });
@@ -11,7 +12,7 @@
     sb: sb,
     app: document.getElementById("app"),
     toastEl: document.getElementById("toast"),
-    state: { session: null, recovery: false, orgs: [], roles: {}, orgId: null, role: null, page: "dashboard", data: {} },
+    state: { session: null, recovery: false, authMarker: authMarker, pendingEmail: null, orgs: [], roles: {}, orgId: null, role: null, page: "dashboard", data: {} },
     statusLabel: { new: "Novo", picking: "Separando", packing: "Embalando", ready: "Pronto", shipped: "Enviado", delivered: "Entregue", cancelled: "Cancelado" },
     paymentLabel: { pending: "Pendente", partial: "Parcial", paid: "Pago", refunded: "Reembolsado" },
     transition: { new: "picking", picking: "packing", packing: "ready", ready: "shipped", shipped: "delivered" }
@@ -58,7 +59,32 @@
     return p.year + "-" + p.month + "-" + p.day + "T" + p.hour + ":" + p.minute;
   };
 
-  S.errText = function (err) { return err && err.message ? err.message : "Ocorreu um erro inesperado."; };
+  S.errText = function (err) {
+    var message = err && err.message ? err.message : "Ocorreu um erro inesperado.";
+    var map = {
+      "Email not confirmed": "Confirme seu e-mail antes de entrar.",
+      "Invalid login credentials": "E-mail ou senha incorretos.",
+      "User already registered": "Já existe uma conta com este e-mail.",
+      "Email rate limit exceeded": "Muitas tentativas de envio. Aguarde alguns minutos e tente novamente.",
+      "For security purposes, you can only request this after 60 seconds.": "Aguarde um minuto antes de solicitar outro e-mail."
+    };
+    return map[message] || message;
+  };
+
+  S.authRedirect = function (kind) {
+    var url = new URL(window.location.href);
+    url.hash = "";
+    url.search = "";
+    if (kind) url.searchParams.set("auth", kind);
+    return url.toString();
+  };
+
+  S.clearAuthMarker = function () {
+    S.state.authMarker = null;
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  };
   S.canAdmin = function () { return S.state.role === "owner" || S.state.role === "admin"; };
   S.canWrite = function () { return S.canAdmin() || S.state.role === "operator"; };
   S.currentOrg = function () { return S.state.orgs.find(function (o) { return o.id === S.state.orgId; }); };
