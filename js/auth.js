@@ -73,9 +73,15 @@
 
     var profile = res.data;
     if (!profile) {
-      var created = await S.sb.from("profiles").insert({ id: user.id }).select("id,full_name,avatar_path").single();
-      if (created.error) throw created.error;
-      profile = created.data;
+      var ensured = await S.sb.from("profiles").upsert(
+        { id: user.id },
+        { onConflict: "id", ignoreDuplicates: true }
+      );
+      if (ensured.error) throw ensured.error;
+
+      var fetched = await S.sb.from("profiles").select("id,full_name,avatar_path").eq("id", user.id).single();
+      if (fetched.error) throw fetched.error;
+      profile = fetched.data;
     }
 
     profile.avatar_url = null;
