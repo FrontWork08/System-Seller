@@ -140,19 +140,85 @@
     S.modal("Editar dados operacionais", body);
   };
 
-  function filterOrders() {
+  S.openTeamInviteForm = function () {
+    var roles = S.state.role === "owner"
+      ? '<option value="operator">Operador</option><option value="viewer">Visualização</option><option value="admin">Administrador</option>'
+      : '<option value="operator">Operador</option><option value="viewer">Visualização</option>';
+    var body = '<form data-form="team-invite"><div class="field"><label>Permissão do convite</label><select name="role">' + roles + '</select></div>' +
+      '<div class="note">O link expira em 7 dias e só pode ser usado uma vez. A pessoa precisa entrar ou criar uma conta no System Seller para aceitar.</div><br>' +
+      '<button class="primary" type="submit">Criar convite</button></form>';
+    S.modal("Novo convite de equipe", body);
+  };
+
+  S.downloadWorkspaceBackup = async function () {
+    if (!S.canAdmin()) throw new Error("Acesso restrito à administração.");
+    var org = S.currentOrg();
+    var rows = await Promise.all([
+      S.fetchAll("stores", "*", "created_at"),
+      S.fetchAll("customers", "*", "created_at"),
+      S.fetchAll("products", "*", "created_at"),
+      S.fetchAll("orders", "*", "created_at"),
+      S.fetchAll("order_items", "*", "created_at"),
+      S.fetchAll("inventory_movements", "*", "created_at"),
+      S.fetchAll("financial_transactions", "*", "created_at"),
+      S.fetchAll("audit_logs", "*", "created_at"),
+      S.sb.rpc("list_team_members", { p_org: S.state.orgId })
+    ]);
+    if (rows[8].error) throw rows[8].error;
+
+    var team = (rows[8].data || []).map(function (m) {
+      return {
+        membership_id: m.membership_id,
+        user_id: m.user_id,
+        full_name: m.full_name || null,
+        role: m.role,
+        created_at: m.created_at
+      };
+    });
+
+    var snapshot = {
+      format: "system-seller-workspace-backup",
+      schema_version: 1,
+      exported_at: new Date().toISOString(),
+      organization: org,
+      stores: rows[0],
+      customers: rows[1],
+      products: rows[2],
+      orders: rows[3],
+      order_items: rows[4],
+      inventory_movements: rows[5],
+      financial_transactions: rows[6],
+      audit_logs: rows[7],
+      team: team
+    };
+
+    var blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: "application/json;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "system-seller-backup-" + S.todayIso() + ".json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    try { window.localStorage.setItem("systemSeller:lastBackup:" + S.state.orgId, snapshot.exported_at); } catch (e) {}
+    return snapshot;
+  };
+
+  var orderSearchTimer = null;
+  function reloadOrdersFromFilters(immediate) {
     var search = document.getElementById("orderSearch");
     var status = document.getElementById("orderStatus");
-    var panel = document.getElementById("ordersPanel");
-    if (!panel) return;
-    var q = (search ? search.value : "").toLowerCase();
-    var s = status ? status.value : "";
-    var rows = (S.state.data.orders || []).filter(function (o) {
-      var matchStatus = !s || o.status === s;
-      var matchText = !q || [o.external_id, o.tracking_code, o.notes, o.id].some(function (v) { return String(v || "").toLowerCase().includes(q); });
-      return matchStatus && matchText;
-    });
-    panel.innerHTML = S.ordersTable(rows);
+    S.state.orderQuery.search = search ? search.value : "";
+    S.state.orderQuery.status = status ? status.value : "";
+    S.state.orderQuery.page = 0;
+    clearTimeout(orderSearchTimer);
+
+    var run = function () {
+      S.pageOrders().catch(function (err) { S.toast(S.errText(err), "error"); });
+    };
+    if (immediate) run();
+    else orderSearchTimer = setTimeout(run, 350);
   }
 
   function filterProducts() {
