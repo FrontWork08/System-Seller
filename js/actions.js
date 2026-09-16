@@ -222,6 +222,14 @@
     var a = b.dataset.action;
     try {
       if (a === "close-modal") S.closeModal();
+      else if (a === "toggle-sidebar") {
+        var shell = document.querySelector(".shell");
+        if (shell) shell.classList.toggle("sidebar-open");
+      }
+      else if (a === "close-sidebar") {
+        var closeShell = document.querySelector(".shell");
+        if (closeShell) closeShell.classList.remove("sidebar-open");
+      }
       else if (a === "auth-mode") S.renderAuth(b.dataset.mode);
       else if (a === "resend-confirmation") {
         if (!S.state.pendingEmail) throw new Error("Informe o e-mail novamente para reenviar a confirmação.");
@@ -235,7 +243,17 @@
         if (resend.error) throw resend.error;
         S.toast("Novo e-mail de confirmação enviado.");
       }
-      else if (a === "logout") await S.sb.auth.signOut();
+      else if (a === "logout") {
+        var signout = await S.sb.auth.signOut();
+        if (signout.error) throw signout.error;
+      }
+      else if (a === "profile-reset-password") {
+        var email = S.state.session && S.state.session.user ? S.state.session.user.email : "";
+        if (!email) throw new Error("Não foi possível identificar o e-mail da conta.");
+        var reset = await S.sb.auth.resetPasswordForEmail(email, { redirectTo: S.authRedirect("recovery") });
+        if (reset.error) throw reset.error;
+        S.toast("Enviamos um link seguro para alterar sua senha.");
+      }
       else if (a === "nav") {
         S.state.page = b.dataset.page;
         S.renderShell();
