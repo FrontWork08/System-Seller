@@ -254,6 +254,18 @@
         if (reset.error) throw reset.error;
         S.toast("Enviamos um link seguro para alterar sua senha.");
       }
+      else if (a === "remove-avatar") {
+        var currentPath = S.state.profile && S.state.profile.avatar_path;
+        if (!currentPath) return;
+        var clearProfile = await S.sb.from("profiles").update({ avatar_path: null, updated_at: new Date().toISOString() }).eq("id", S.state.session.user.id);
+        if (clearProfile.error) throw clearProfile.error;
+        var removed = await S.sb.storage.from("profile-photos").remove([currentPath]);
+        if (removed.error) throw removed.error;
+        await S.loadProfile();
+        S.renderShell();
+        await S.pageProfile();
+        S.toast("Foto de perfil removida.");
+      }
       else if (a === "nav") {
         S.state.page = b.dataset.page;
         S.renderShell();
@@ -323,7 +335,44 @@
   document.addEventListener("change", async function (ev) {
     var t = ev.target;
     try {
-      if (t.id === "orgSelect") {
+      if (t.id === "avatarInput") {
+        var file = t.files && t.files[0];
+        if (!file) return;
+        var allowed = ["image/jpeg", "image/png", "image/webp"];
+        if (allowed.indexOf(file.type) === -1) throw new Error("Use uma imagem JPG, PNG ou WebP.");
+        if (file.size > 2097152) throw new Error("A foto deve ter no máximo 2 MB.");
+
+        t.disabled = true;
+        var ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+        var userId = S.state.session.user.id;
+        var oldPath = S.state.profile && S.state.profile.avatar_path;
+        var newPath = userId + "/avatar-" + Date.now() + "." + ext;
+        var upload = await S.sb.storage.from("profile-photos").upload(newPath, file, {
+          contentType: file.type,
+          cacheControl: "3600",
+          upsert: false
+        });
+        if (upload.error) {
+          t.disabled = false;
+          throw upload.error;
+        }
+
+        var saveAvatar = await S.sb.from("profiles").update({
+          avatar_path: newPath,
+          updated_at: new Date().toISOString()
+        }).eq("id", userId);
+        if (saveAvatar.error) {
+          await S.sb.storage.from("profile-photos").remove([newPath]);
+          t.disabled = false;
+          throw saveAvatar.error;
+        }
+        if (oldPath) await S.sb.storage.from("profile-photos").remove([oldPath]);
+
+        await S.loadProfile();
+        S.renderShell();
+        await S.pageProfile();
+        S.toast("Foto de perfil atualizada.");
+      } else if (t.id === "orgSelect") {
         S.state.orgId = t.value;
         S.state.role = S.state.roles[S.state.orgId];
         S.state.page = "dashboard";
@@ -386,6 +435,18 @@
         S.state.recovery = false;
         S.toast("Senha atualizada.");
         await S.loadContext();
+      } else if (form.dataset.form === "profile") {
+        var fullName = String(f.full_name || "").trim();
+        if (fullName.length < 2 || fullName.length > 80) throw new Error("O nome exibido deve ter entre 2 e 80 caracteres.");
+        var profileSave = await S.sb.from("profiles").update({
+          full_name: fullName,
+          updated_at: new Date().toISOString()
+        }).eq("id", S.state.session.user.id);
+        if (profileSave.error) throw profileSave.error;
+        await S.loadProfile();
+        S.renderShell();
+        await S.pageProfile();
+        S.toast("Perfil atualizado.");
       } else if (form.dataset.form === "onboarding") {
         var onboard = await S.sb.rpc("create_workspace", { p_name: String(f.name).trim() });
         if (onboard.error) throw onboard.error;
