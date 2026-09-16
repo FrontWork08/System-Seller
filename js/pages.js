@@ -221,6 +221,94 @@
       (S.canAdmin() ? '<button class="primary" data-action="new-store">+ Loja</button>' : "") + '</div><section class="panel"><div class="panel-body"><div class="list">' + list + "</div></div></section>";
   };
 
+  S.maskEmail = function (email) {
+    var text = String(email || "");
+    var parts = text.split("@");
+    if (parts.length !== 2) return "Conta";
+    var local = parts[0];
+    var shown = local.length <= 2 ? local.charAt(0) : local.slice(0, 2);
+    return shown + "***@" + parts[1];
+  };
+
+  S.pageTeam = async function () {
+    if (!S.canAdmin()) throw new Error("Acesso restrito à administração.");
+
+    var both = await Promise.all([
+      S.sb.rpc("list_team_members", { p_org: S.state.orgId }),
+      S.sb.from("organization_invites")
+        .select("id,token,role,expires_at,redeemed_at,revoked_at,created_at")
+        .eq("organization_id", S.state.orgId)
+        .order("created_at", { ascending: false })
+        .limit(30)
+    ]);
+    if (both[0].error) throw both[0].error;
+    if (both[1].error) throw both[1].error;
+
+    var members = both[0].data || [];
+    var invites = both[1].data || [];
+    S.state.data.teamMembers = members;
+    S.state.data.teamInvites = invites;
+
+    var memberRows = members.length ? members.map(function (m) {
+      var canManage = m.role !== "owner" && (S.state.role === "owner" || (S.state.role === "admin" && m.role !== "admin"));
+      var roleCell;
+      if (canManage) {
+        var allowed = S.state.role === "owner" ? ["admin","operator","viewer"] : ["operator","viewer"];
+        roleCell = '<select class="team-role-select" data-action="team-role" data-id="' + m.membership_id + '">' +
+          allowed.map(function (r) {
+            return '<option value="' + r + '"' + (m.role === r ? " selected" : "") + '>' + S.e(S.roleLabel(r)) + "</option>";
+          }).join("") + "</select>";
+      } else {
+        roleCell = S.badge(S.roleLabel(m.role), m.role === "owner" ? "info" : "");
+      }
+
+      var identity = m.full_name ? S.e(m.full_name) : "Membro da equipe";
+      var masked = S.maskEmail(m.email);
+      return '<tr><td><strong>' + identity + '</strong><div class="meta">' + S.e(masked) + '</div></td><td>' + roleCell + '</td><td>' + S.day(m.created_at) + '</td><td class="right">' +
+        (canManage ? '<button class="danger-btn mini" data-action="remove-team-member" data-id="' + m.membership_id + '">Remover</button>' : "") + "</td></tr>";
+    }).join("") : "";
+
+    var memberBody = memberRows ? '<div class="table-wrap"><table class="table team-table"><thead><tr><th>Membro</th><th>Permissão</th><th>Desde</th><th></th></tr></thead><tbody>' + memberRows + '</tbody></table></div>' :
+      S.empty("Nenhum membro", "Crie um convite para adicionar pessoas à equipe.");
+
+    var now = Date.now();
+    var inviteList = invites.length ? invites.map(function (i) {
+      var active = !i.redeemed_at && !i.revoked_at && new Date(i.expires_at).getTime() > now;
+      var status = i.redeemed_at ? S.badge("Usado", "ok") : i.revoked_at ? S.badge("Revogado", "danger") : new Date(i.expires_at).getTime() <= now ? S.badge("Expirado", "warn") : S.badge("Ativo", "info");
+      var link = (S.cfg.productionUrl || window.location.origin).replace(/\/$/, "") + "/?invite=" + encodeURIComponent(i.token);
+      return '<div class="list-item team-invite"><div><strong>' + S.e(S.roleLabel(i.role)) + '</strong><div class="meta">Criado em ' + S.dt(i.created_at) + ' · expira em ' + S.dt(i.expires_at) + '</div></div><div class="actions">' + status +
+        (active ? '<button class="ghost mini" data-action="copy-team-invite" data-link="' + S.e(link) + '">Copiar convite</button><button class="danger-btn mini" data-action="revoke-team-invite" data-id="' + i.id + '">Revogar</button>' : "") +
+        "</div></div>";
+    }).join("") : '<div class="muted">Nenhum convite criado ainda.</div>';
+
+    document.getElementById("page").innerHTML =
+      '<div class="page-head"><div><h2>Equipe</h2><p>Convide funcionários e controle o que cada pessoa pode fazer dentro da empresa.</p></div><div class="actions"><button class="primary" data-action="new-team-invite">+ Criar convite</button></div></div>' +
+      '<div class="team-role-help"><div><strong>Administrador</strong><span>Gerencia operação, financeiro, equipe e auditoria.</span></div><div><strong>Operador</strong><span>Cria e atualiza pedidos, clientes, produtos e estoque.</span></div><div><strong>Visualização</strong><span>Acompanha dados sem alterar a operação.</span></div></div>' +
+      '<section class="panel"><div class="panel-head"><h3>Membros</h3><span class="muted">' + members.length + ' conta(s)</span></div>' + memberBody + '</section>' +
+      '<section class="panel team-invites-panel"><div class="panel-head"><h3>Convites</h3><span class="muted">Links expiram em 7 dias e funcionam uma única vez.</span></div><div class="panel-body"><div class="list">' + inviteList + "</div></div></section>";
+  };
+
+  S.pageBackup = async function () {
+    if (!S.canAdmin()) throw new Error("Acesso restrito à administração.");
+    var key = "systemSeller:lastBackup:" + S.state.orgId;
+    var last = "";
+    try { last = window.localStorage.getItem(key) || ""; } catch (e) {}
+
+    var counts = await Promise.all([
+      S.sb.from("orders").select("id", { count: "exact", head: true }).eq("organization_id", S.state.orgId),
+      S.sb.from("products").select("id", { count: "exact", head: true }).eq("organization_id", S.state.orgId),
+      S.sb.from("customers").select("id", { count: "exact", head: true }).eq("organization_id", S.state.orgId)
+    ]);
+    counts.forEach(function (x) { if (x.error) throw x.error; });
+
+    document.getElementById("page").innerHTML =
+      '<div class="page-head"><div><h2>Backup e recuperação</h2><p>Gere uma cópia portátil dos dados da empresa para arquivamento e conferência.</p></div><div class="actions"><button class="primary" data-action="backup-workspace">Baixar backup JSON</button></div></div>' +
+      '<div class="cards"><div class="card"><div class="k">Pedidos</div><div class="v">' + (counts[0].count || 0) + '</div></div><div class="card"><div class="k">Produtos</div><div class="v">' + (counts[1].count || 0) + '</div></div><div class="card"><div class="k">Clientes</div><div class="v">' + (counts[2].count || 0) + '</div></div><div class="card"><div class="k">Último backup neste navegador</div><div class="v backup-date">' + (last ? S.dt(last) : "Nunca") + '</div></div></div>' +
+      '<section class="panel"><div class="panel-body"><h3>O que entra no arquivo</h3><p class="muted">Empresa, lojas, clientes, produtos, pedidos, itens, movimentações de estoque, financeiro, equipe e auditoria. Tokens de convite e credenciais não são exportados.</p>' +
+      '<div class="note">Este arquivo é um backup operacional complementar. Ele não substitui os backups gerenciados e a retenção do banco no provedor. Guarde o JSON em local seguro porque ele contém dados comerciais da empresa.</div></div></section>' +
+      '<section class="panel backup-checklist"><div class="panel-head"><h3>Rotina recomendada</h3></div><div class="panel-body"><div class="list"><div class="list-item"><div><strong>Semanal</strong><div class="meta">Baixe um snapshot e armazene fora do computador principal.</div></div></div><div class="list-item"><div><strong>Antes de mudanças grandes</strong><div class="meta">Exporte antes de importações, integrações ou alterações em massa.</div></div></div><div class="list-item"><div><strong>Mensal</strong><div class="meta">Teste se o arquivo abre e contém pedidos, produtos e financeiro esperados.</div></div></div></div></div></section>';
+  };
+
   S.pageAudit = async function () {
     var res = await S.sb.from("audit_logs").select("id,entity_type,entity_id,action,created_at,actor_id").eq("organization_id", S.state.orgId).order("created_at", { ascending: false }).limit(200);
     if (res.error) throw res.error;
