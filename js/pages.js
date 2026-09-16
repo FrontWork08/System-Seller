@@ -278,7 +278,8 @@
     var activeStores = stores.filter(function (x) { return x.active; }).length;
     var connectedStores = stores.filter(function (x) { return x.integration_status === "connected"; }).length;
     var roleLabel = S.state.role === "owner" ? "Proprietário" : S.state.role === "admin" ? "Administrador" : S.state.role === "operator" ? "Operador" : "Visualização";
-    var initial = String(user.email || "U").charAt(0).toUpperCase();
+    var profile = S.state.profile || {};
+    var displayName = S.profileName();
 
     var statusOrder = ["new", "picking", "packing", "ready", "shipped", "delivered", "cancelled"];
     var maxStatus = Math.max(1, orders.length);
@@ -307,8 +308,13 @@
     document.getElementById("page").innerHTML =
       '<div class="page-head"><div><h2>Perfil e estatísticas</h2><p>Conta, empresa e visão consolidada da operação.</p></div><div class="actions">' +
       '<button class="ghost" data-action="profile-reset-password">Alterar senha</button><button class="danger-btn" data-action="logout">Sair da conta</button></div></div>' +
-      '<section class="profile-hero"><div class="profile-avatar">' + S.e(initial) + '</div><div class="profile-main"><span class="profile-kicker">Conta ativa</span><h3>' + S.e(user.email || "Usuário") + '</h3><p>' + S.e(org ? org.name : "Empresa") + ' · ' + S.e(roleLabel) + '</p></div>' +
+      '<section class="profile-hero"><div class="profile-photo-wrap">' + S.avatarMarkup("profile-avatar-img") +
+      '<label class="photo-edit" for="avatarInput">Alterar foto</label><input id="avatarInput" class="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp">' +
+      (profile.avatar_path ? '<button class="photo-remove" type="button" data-action="remove-avatar">Remover foto</button>' : '') +
+      '</div><div class="profile-main"><span class="profile-kicker">Conta ativa</span><h3>' + S.e(displayName) + '</h3><p>' + S.e(org ? org.name : "Empresa") + ' · ' + S.e(roleLabel) + '</p><div class="privacy-note">Seu e-mail de acesso não é exibido aqui por privacidade.</div></div>' +
       '<div class="profile-meta"><div><span>Conta criada</span><b>' + S.e(accountCreated) + '</b></div><div><span>Último acesso</span><b>' + S.e(lastSignIn) + '</b></div></div></section>' +
+
+      '<section class="panel profile-settings"><div class="panel-head"><h3>Dados do perfil</h3><span class="muted">Visível apenas dentro da sua conta</span></div><div class="panel-body"><form data-form="profile"><div class="form-grid"><div class="field span2"><label>Nome exibido</label><input name="full_name" minlength="2" maxlength="80" value="' + S.e(profile.full_name || "") + '" placeholder="Ex.: João Silva" required></div></div><div class="actions"><button class="primary" type="submit">Salvar perfil</button></div></form></div></section>' +
 
       '<div class="section-title">Operação</div><div class="stats-grid">' +
       '<div class="metric"><span>Pedidos totais</span><strong>' + orders.length + '</strong><small>' + openOrders.length + ' em andamento</small></div>' +
