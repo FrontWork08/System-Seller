@@ -11,6 +11,8 @@
 - Ajustes de estoque passam por RPC e geram livro de movimentações.
 - Auditoria registra mudanças críticas.
 - Financeiro e auditoria são restritos a proprietário/administrador.
+- Registros operacionais centrais não podem sofrer hard delete pelo navegador.
+- Usuários web não podem escrever integration_status de lojas; conexão só pode ser promovida por backend confiável.
 - CSP, HSTS, anti-clickjacking, nosniff, Referrer Policy e Permissions Policy estão configurados para deploy na Vercel.
 - Exportação CSV protege células iniciadas por =, +, - e @ contra formula injection.
 

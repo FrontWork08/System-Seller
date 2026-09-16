@@ -14,6 +14,8 @@ Sistema web multiempresa para gestão de pedidos, estoque, clientes, prazos e fi
 - pagamento e reembolso vinculados ao financeiro;
 - receitas e despesas manuais;
 - auditoria de alterações críticas;
+- hard delete de empresa, produto, cliente e loja bloqueado no navegador;
+- estado de integração de marketplace não pode ser forjado pelo cliente web;
 - exportação CSV protegida contra células executáveis;
 - interface responsiva;
 - Shopee e Mercado Livre disponíveis como canais, sem simular integração antes das APIs oficiais.

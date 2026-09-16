@@ -8,6 +8,7 @@ Migrações aplicadas:
 3. production_core_schema
 4. production_security_workflows
 5. production_fk_indexes
+6. production_browser_hardening
 
 O núcleo de produção usa organizations, memberships, stores, customers, products, orders, order_items, inventory_movements, financial_transactions e audit_logs.
 
