@@ -12,7 +12,7 @@
     sb: sb,
     app: document.getElementById("app"),
     toastEl: document.getElementById("toast"),
-    state: { session: null, recovery: false, authMarker: authMarker, pendingEmail: null, orgs: [], roles: {}, orgId: null, role: null, page: "dashboard", data: {} },
+    state: { session: null, recovery: false, authMarker: authMarker, pendingEmail: null, profile: null, orgs: [], roles: {}, orgId: null, role: null, page: "dashboard", data: {} },
     statusLabel: { new: "Novo", picking: "Separando", packing: "Embalando", ready: "Pronto", shipped: "Enviado", delivered: "Entregue", cancelled: "Cancelado" },
     paymentLabel: { pending: "Pendente", partial: "Parcial", paid: "Pago", refunded: "Reembolsado" },
     transition: { new: "picking", picking: "packing", packing: "ready", ready: "shipped", shipped: "delivered" }
@@ -90,6 +90,21 @@
   S.canAdmin = function () { return S.state.role === "owner" || S.state.role === "admin"; };
   S.canWrite = function () { return S.canAdmin() || S.state.role === "operator"; };
   S.currentOrg = function () { return S.state.orgs.find(function (o) { return o.id === S.state.orgId; }); };
+
+  S.profileName = function () {
+    var p = S.state.profile || {};
+    return String(p.full_name || "Minha conta");
+  };
+
+  S.avatarMarkup = function (className) {
+    var p = S.state.profile || {};
+    var name = S.profileName();
+    var initial = name && name !== "Minha conta" ? name.charAt(0).toUpperCase() : "U";
+    if (p.avatar_url) {
+      return '<img class="' + S.e(className || "avatar-image") + '" src="' + S.e(p.avatar_url) + '" alt="Foto de perfil">';
+    }
+    return '<span class="' + S.e(className || "avatar-fallback") + '">' + S.e(initial) + '</span>';
+  };
 
   S.toast = function (message, type) {
     type = type || "ok";
@@ -206,18 +221,17 @@
         '<b>' + item[1] + '</b><span>' + item[2] + '</span></button>';
     });
 
-    var email = S.state.session.user.email || "Usuário";
-    var initial = email.charAt(0).toUpperCase();
+    var displayName = S.profileName();
 
     S.app.innerHTML = '<div class="shell"><aside class="sidebar">' +
       '<div class="brand"><div class="brand-mark">SS</div><span>System Seller</span></div>' +
       '<nav class="nav">' + navHtml + '</nav>' +
-      '<div class="sidebar-foot"><button class="userbox" data-action="nav" data-page="profile"><span class="avatar-mini">' + S.e(initial) + '</span><span class="userbox-copy"><strong>' + S.e(email) + '</strong><small>' + S.e(roleLabel) + '</small></span></button>' +
+      '<div class="sidebar-foot"><button class="userbox" data-action="nav" data-page="profile">' + S.avatarMarkup("avatar-mini-img") + '<span class="userbox-copy"><strong>' + S.e(displayName) + '</strong><small>' + S.e(roleLabel) + '</small></span></button>' +
       '<button class="logout-btn" data-action="logout">↪ <span>Sair da conta</span></button></div></aside>' +
       '<button class="mobile-scrim" data-action="close-sidebar" aria-label="Fechar menu"></button>' +
       '<section class="main"><header class="topbar"><button class="mobile-menu" data-action="toggle-sidebar" aria-label="Abrir menu">☰</button>' +
-      '<div class="topbar-left"><h1>' + S.e(org ? org.name : "System Seller") + '</h1><p>' + S.e(email) + '</p></div>' +
-      '<div class="top-actions">' + selector + S.badge(roleLabel, "info") + '<button class="profile-chip" data-action="nav" data-page="profile" aria-label="Abrir perfil"><span>' + S.e(initial) + '</span><b>Perfil</b></button></div>' +
+      '<div class="topbar-left"><h1>' + S.e(org ? org.name : "System Seller") + '</h1><p>Área protegida da empresa</p></div>' +
+      '<div class="top-actions">' + selector + S.badge(roleLabel, "info") + '<button class="profile-chip" data-action="nav" data-page="profile" aria-label="Abrir perfil">' + S.avatarMarkup("profile-chip-img") + '<b>Perfil</b></button></div>' +
       '</header><div class="content" id="page"><div class="boot"><div class="spinner"></div><p>Carregando…</p></div></div></section></div>';
   };
 
