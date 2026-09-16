@@ -56,3 +56,6 @@
 .privacy-note{display:inline-flex;margin-top:10px;padding:7px 9px;border:1px solid #244566;border-radius:9px;background:#0a1829;color:#8fa7c2;font-size:11px;line-height:1.35}
 .profile-settings{margin-top:16px}
 .profile-settings .panel-head span{font-size:11px}
+
+span.avatar-mini-img,span.profile-chip-img,span.profile-avatar-img{display:grid;place-items:center;background:linear-gradient(135deg,var(--brand),#7ee0ff);color:#06111f;font-weight:900}
+span.avatar-mini-img{font-size:13px}span.profile-chip-img{font-size:11px}span.profile-avatar-img{font-size:30px}
