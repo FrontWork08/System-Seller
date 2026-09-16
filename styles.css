@@ -33,7 +33,7 @@
   .content{padding:14px}
   .stats-grid{grid-template-columns:1fr 1fr;gap:10px}
   .profile-hero{grid-template-columns:auto 1fr;padding:16px}
-  .profile-avatar{width:58px;height:58px;border-radius:17px;font-size:24px}
+  .profile-avatar{width:58px;height:58px;border-radius:17px;font-size:24px}\n  .profile-avatar-img{width:72px;height:72px;border-radius:20px}\n  .profile-photo-wrap{min-width:80px}
   .profile-meta{grid-column:1/-1;grid-template-columns:1fr 1fr;width:100%}
   .profile-meta>div{min-width:0}
 }
@@ -43,3 +43,16 @@
   .page-head .actions{width:100%}
   .page-head .actions button{flex:1}
 }
+
+.avatar-mini-img,.profile-chip-img,.profile-avatar-img{display:block;object-fit:cover;background:#17395e;border:1px solid #31577e}
+.avatar-mini-img{width:34px;height:34px;flex:0 0 34px;border-radius:10px}
+.profile-chip-img{width:28px;height:28px;border-radius:8px}
+.profile-avatar-img{width:92px;height:92px;border-radius:26px;box-shadow:0 12px 28px rgba(0,0,0,.22)}
+.profile-photo-wrap{display:grid;justify-items:center;gap:7px;min-width:112px}
+.photo-edit,.photo-remove{font-size:11px;font-weight:800;border-radius:8px;padding:6px 9px}
+.photo-edit{cursor:pointer;background:#17395e;border:1px solid #31577e;color:#d6ebff}
+.photo-remove{border:0;background:transparent;color:#ff9aa6;padding:3px 6px}
+.visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.privacy-note{display:inline-flex;margin-top:10px;padding:7px 9px;border:1px solid #244566;border-radius:9px;background:#0a1829;color:#8fa7c2;font-size:11px;line-height:1.35}
+.profile-settings{margin-top:16px}
+.profile-settings .panel-head span{font-size:11px}
