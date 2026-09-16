@@ -1,0 +1,74 @@
+(function () {
+  "use strict";
+  var S = window.SS;
+
+  S.renderAuth = function (mode) {
+    mode = mode || "login";
+    if (S.state.recovery && S.state.session) return S.renderRecovery();
+
+    var form = "";
+    if (mode === "login") {
+      form = '<form data-form="login"><div class="field"><label>E-mail</label><input name="email" type="email" autocomplete="email" required></div>' +
+        '<div class="field"><label>Senha</label><input name="password" type="password" autocomplete="current-password" required></div>' +
+        '<button class="primary full" type="submit">Entrar</button><div class="login-foot"><button class="link-btn" type="button" data-action="auth-mode" data-mode="forgot">Esqueci minha senha</button></div></form>';
+    } else if (mode === "signup") {
+      form = '<form data-form="signup"><div class="field"><label>E-mail</label><input name="email" type="email" autocomplete="email" required></div>' +
+        '<div class="field"><label>Senha</label><input name="password" type="password" minlength="10" autocomplete="new-password" required></div>' +
+        '<div class="field"><label>Confirmar senha</label><input name="confirm" type="password" minlength="10" autocomplete="new-password" required></div>' +
+        '<div class="note">Use ao menos 10 caracteres. Confirme seu e-mail antes do primeiro acesso quando a confirmação estiver habilitada.</div><br>' +
+        '<button class="primary full" type="submit">Criar conta</button></form>';
+    } else {
+      form = '<form data-form="forgot"><div class="field"><label>E-mail da conta</label><input name="email" type="email" autocomplete="email" required></div>' +
+        '<button class="primary full" type="submit">Enviar link de redefinição</button><div class="login-foot"><button class="link-btn" type="button" data-action="auth-mode" data-mode="login">Voltar ao login</button></div></form>';
+    }
+
+    var title = mode === "login" ? "Acesse sua operação" : mode === "signup" ? "Crie sua conta" : "Recuperar acesso";
+    var sub = mode === "login" ? "Pedidos, estoque e financeiro em um só lugar." : mode === "signup" ? "Sua empresa fica isolada das demais por permissões no banco." : "Enviaremos um link seguro para redefinir a senha.";
+    var tabs = mode === "forgot" ? "" : '<div class="tabs"><button class="tab ' + (mode === "login" ? "active" : "") + '" data-action="auth-mode" data-mode="login">Entrar</button><button class="tab ' + (mode === "signup" ? "active" : "") + '" data-action="auth-mode" data-mode="signup">Criar conta</button></div>';
+
+    S.app.innerHTML = '<div class="auth-wrap"><section class="auth-hero"><div class="brand"><div class="brand-mark">SS</div><span>System Seller</span></div>' +
+      '<div class="auth-copy"><h1>Controle a operação sem perder o controle do dinheiro.</h1><p>Gestão real de pedidos, estoque, clientes, prazos e caixa. Sem dados demonstrativos: tudo é gravado no banco da sua empresa.</p></div>' +
+      '<div class="feature-row"><div class="feature"><strong>Estoque transacional</strong><span>Baixa e estorno ligados ao pedido.</span></div><div class="feature"><strong>Multiempresa</strong><span>Cada cliente acessa somente seus dados.</span></div><div class="feature"><strong>Auditoria</strong><span>Alterações importantes ficam registradas.</span></div></div></section>' +
+      '<section class="auth-card-wrap"><div class="auth-card"><h2>' + title + '</h2><p class="sub">' + sub + "</p>" + tabs + form + "</div></section></div>";
+  };
+
+  S.renderRecovery = function () {
+    S.app.innerHTML = '<section class="panel recovery"><div class="panel-body"><div class="brand"><div class="brand-mark">SS</div><span>System Seller</span></div>' +
+      '<h2>Defina uma nova senha</h2><p class="muted">O link de recuperação foi validado. Escolha uma nova senha forte.</p>' +
+      '<form data-form="recovery"><div class="field"><label>Nova senha</label><input name="password" type="password" minlength="10" autocomplete="new-password" required></div>' +
+      '<div class="field"><label>Confirmar senha</label><input name="confirm" type="password" minlength="10" autocomplete="new-password" required></div>' +
+      '<button class="primary" type="submit">Atualizar senha</button></form></div></section>';
+  };
+
+  S.renderOnboarding = function () {
+    S.app.innerHTML = '<div class="auth-card-wrap"><section class="auth-card"><div class="brand"><div class="brand-mark">SS</div><span>System Seller</span></div>' +
+      '<h2>Cadastre sua empresa</h2><p class="sub">Isso cria o espaço isolado onde pedidos, estoque, clientes e financeiro serão guardados.</p>' +
+      '<form data-form="onboarding"><div class="field"><label>Nome da empresa</label><input name="name" maxlength="120" required placeholder="Ex.: Minha Loja"></div>' +
+      '<button class="primary full" type="submit">Criar ambiente da empresa</button></form></section></div>';
+  };
+
+  S.loadContext = async function () {
+    var memberships = await S.sb.from("memberships").select("organization_id,role");
+    if (memberships.error) throw memberships.error;
+    var orgs = await S.sb.from("organizations").select("id,name,owner_user_id").order("name");
+    if (orgs.error) throw orgs.error;
+
+    S.state.orgs = orgs.data || [];
+    S.state.roles = {};
+    (memberships.data || []).forEach(function (x) { S.state.roles[x.organization_id] = x.role; });
+
+    if (!S.state.orgId || !S.state.orgs.some(function (o) { return o.id === S.state.orgId; })) {
+      S.state.orgId = S.state.orgs[0] ? S.state.orgs[0].id : null;
+    }
+
+    var org = S.currentOrg();
+    S.state.role = S.state.roles[S.state.orgId] || (org && org.owner_user_id === S.state.session.user.id ? "owner" : null);
+
+    if (!S.state.orgId) {
+      S.renderOnboarding();
+    } else {
+      S.renderShell();
+      await S.loadPage();
+    }
+  };
+})();
