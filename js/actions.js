@@ -223,6 +223,18 @@
     try {
       if (a === "close-modal") S.closeModal();
       else if (a === "auth-mode") S.renderAuth(b.dataset.mode);
+      else if (a === "resend-confirmation") {
+        if (!S.state.pendingEmail) throw new Error("Informe o e-mail novamente para reenviar a confirmação.");
+        b.disabled = true;
+        var resend = await S.sb.auth.resend({
+          type: "signup",
+          email: S.state.pendingEmail,
+          options: { emailRedirectTo: S.authRedirect("confirmed") }
+        });
+        b.disabled = false;
+        if (resend.error) throw resend.error;
+        S.toast("Novo e-mail de confirmação enviado.");
+      }
       else if (a === "logout") await S.sb.auth.signOut();
       else if (a === "nav") {
         S.state.page = b.dataset.page;
@@ -337,15 +349,14 @@
         var signup = await S.sb.auth.signUp({
           email: String(f.email).trim(),
           password: String(f.password),
-          options: { emailRedirectTo: location.origin + location.pathname }
+          options: { emailRedirectTo: S.authRedirect("confirmed") }
         });
         if (signup.error) throw signup.error;
         if (!signup.data.session) {
-          S.toast("Conta criada. Confirme o e-mail antes de entrar.");
-          S.renderAuth("login");
+          S.renderEmailConfirmation(String(f.email).trim());
         }
       } else if (form.dataset.form === "forgot") {
-        var forgot = await S.sb.auth.resetPasswordForEmail(String(f.email).trim(), { redirectTo: location.origin + location.pathname });
+        var forgot = await S.sb.auth.resetPasswordForEmail(String(f.email).trim(), { redirectTo: S.authRedirect("recovery") });
         if (forgot.error) throw forgot.error;
         S.toast("Se o e-mail estiver cadastrado, o link de recuperação será enviado.");
         S.renderAuth("login");
