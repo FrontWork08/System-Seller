@@ -388,6 +388,48 @@
         if (dr.error) throw dr.error;
         S.toast("Lançamento excluído.");
         await S.pageFinance();
+      } else if (a === "order-page") {
+        var direction = Number(b.dataset.direction) || 0;
+        if (!direction) return;
+        S.state.orderQuery.page = Math.max(0, (Number(S.state.orderQuery.page) || 0) + direction);
+        await S.pageOrders();
+      } else if (a === "new-team-invite") {
+        S.openTeamInviteForm();
+      } else if (a === "copy-team-invite") {
+        var inviteLink = b.dataset.link || "";
+        if (!inviteLink) throw new Error("Convite inválido.");
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(inviteLink);
+        } else {
+          var tmp = document.createElement("textarea");
+          tmp.value = inviteLink;
+          tmp.setAttribute("readonly", "");
+          tmp.style.position = "fixed";
+          tmp.style.opacity = "0";
+          document.body.appendChild(tmp);
+          tmp.select();
+          document.execCommand("copy");
+          tmp.remove();
+        }
+        S.toast("Link do convite copiado.");
+      } else if (a === "revoke-team-invite") {
+        if (!confirm("Revogar este convite? O link deixará de funcionar.")) return;
+        var revoke = await S.sb.rpc("revoke_team_invite", { p_invite_id: b.dataset.id });
+        if (revoke.error) throw revoke.error;
+        S.toast("Convite revogado.");
+        await S.pageTeam();
+      } else if (a === "remove-team-member") {
+        if (!confirm("Remover esta pessoa da equipe? Ela perderá o acesso a esta empresa.")) return;
+        var removeMember = await S.sb.rpc("remove_team_member", { p_membership_id: b.dataset.id });
+        if (removeMember.error) throw removeMember.error;
+        S.toast("Membro removido da equipe.");
+        await S.pageTeam();
+      } else if (a === "backup-workspace") {
+        b.disabled = true;
+        await S.downloadWorkspaceBackup();
+        b.disabled = false;
+        S.toast("Backup JSON gerado.");
+        await S.pageBackup();
       } else if (a === "export") {
         await S.exportKind(b.dataset.kind);
         S.toast("Arquivo CSV gerado.");
@@ -449,8 +491,24 @@
         var row = t.closest(".order-line");
         if (row && opt && opt.dataset.price) row.querySelector(".order-price").value = Number(opt.dataset.price).toFixed(2);
         S.updateEstimate();
-      } else if (t.id === "orderStatus") filterOrders();
-      else if (t.id === "stockFilter") filterProducts();
+      } else if (t.id === "orderStatus") {
+        reloadOrdersFromFilters(true);
+      } else if (t.classList.contains("team-role-select")) {
+        t.disabled = true;
+        var roleUpdate = await S.sb.rpc("update_team_member_role", {
+          p_membership_id: t.dataset.id,
+          p_role: t.value
+        });
+        if (roleUpdate.error) {
+          t.disabled = false;
+          throw roleUpdate.error;
+        }
+        S.toast("Permissão atualizada.");
+        await S.loadContext();
+        S.state.page = "team";
+        S.renderShell();
+        await S.pageTeam();
+      } else if (t.id === "stockFilter") filterProducts();
     } catch (err) {
       S.toast(S.errText(err), "error");
     }
@@ -459,7 +517,7 @@
   document.addEventListener("input", function (ev) {
     var t = ev.target;
     if (t.closest("#orderForm")) S.updateEstimate();
-    if (t.id === "orderSearch") filterOrders();
+    if (t.id === "orderSearch") reloadOrdersFromFilters(false);
     if (t.id === "productSearch") filterProducts();
     if (t.id === "customerSearch") filterCustomers();
   });
@@ -517,6 +575,20 @@
         if (onboard.error) throw onboard.error;
         S.toast("Empresa criada.");
         await S.loadContext();
+      } else if (form.dataset.form === "team-invite") {
+        var invite = await S.sb.rpc("create_team_invite", {
+          p_org: S.state.orgId,
+          p_role: String(f.role)
+        });
+        if (invite.error) throw invite.error;
+        S.closeModal();
+        await S.pageTeam();
+        var createdLink = (S.cfg.productionUrl || window.location.origin).replace(/\/$/, "") + "/?invite=" + encodeURIComponent(invite.data);
+        S.modal("Convite criado",
+          '<div class="note">Envie este link para a pessoa que fará parte da equipe. Ele expira em 7 dias e funciona uma única vez.</div><br>' +
+          '<div class="field"><label>Link do convite</label><input value="' + S.e(createdLink) + '" readonly></div>' +
+          '<button class="primary full" type="button" data-action="copy-team-invite" data-link="' + S.e(createdLink) + '">Copiar link</button>'
+        );
       } else if (form.dataset.form === "order") {
         var lines = Array.from(form.querySelectorAll(".order-line"));
         if (!lines.length) throw new Error("Adicione ao menos um item.");
