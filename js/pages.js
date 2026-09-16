@@ -75,20 +75,72 @@
       }).join("") + "</tbody></table></div>";
   };
 
+  S.safeOrderSearch = function (value) {
+    return String(value || "")
+      .replace(/[,()*"'\\%_]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 80);
+  };
+
+  S.loadOrdersPage = async function () {
+    var oq = S.state.orderQuery || { page: 0, size: 50, search: "", status: "" };
+    var size = Math.min(100, Math.max(10, Number(oq.size) || 50));
+    var pageIndex = Math.max(0, Number(oq.page) || 0);
+    var offset = pageIndex * size;
+    var query = S.sb.from("orders")
+      .select("*", { count: "exact" })
+      .eq("organization_id", S.state.orgId);
+
+    if (oq.status) query = query.eq("status", oq.status);
+    var search = S.safeOrderSearch(oq.search);
+    if (search) {
+      query = query.or(
+        "external_id.ilike.*" + search + "*,tracking_code.ilike.*" + search + "*,notes.ilike.*" + search + "*"
+      );
+    }
+
+    query = query.order("created_at", { ascending: false }).range(offset, offset + size - 1);
+    var res = await query;
+    if (res.error) throw res.error;
+    return { rows: res.data || [], total: Number(res.count) || 0, page: pageIndex, size: size };
+  };
+
   S.pageOrders = async function () {
     var both = await Promise.all([
-      S.sb.from("orders").select("*").eq("organization_id", S.state.orgId).order("created_at", { ascending: false }).limit(300),
-      S.getCore()
+      S.loadOrdersPage(),
+      S.fetchAll("stores", "*", "name"),
+      S.fetchAll("customers", "*", "name")
     ]);
-    if (both[0].error) throw both[0].error;
-    S.state.data.orders = both[0].data || [];
-    var statusOptions = Object.keys(S.statusLabel).map(function (k) { return '<option value="' + k + '">' + S.statusLabel[k] + "</option>"; }).join("");
+    var result = both[0];
+    var core = { stores: both[1], customers: both[2] };
+    var totalPages = Math.max(1, Math.ceil(result.total / result.size));
+
+    if (result.page >= totalPages && result.page > 0) {
+      S.state.orderQuery.page = totalPages - 1;
+      return S.pageOrders();
+    }
+
+    S.state.data.orders = result.rows;
+    S.state.data.stores = core.stores;
+    S.state.data.customers = core.customers;
+
+    var statusOptions = Object.keys(S.statusLabel).map(function (k) {
+      return '<option value="' + k + '"' + (S.state.orderQuery.status === k ? " selected" : "") + '>' + S.statusLabel[k] + "</option>";
+    }).join("");
+    var pageNumber = result.page + 1;
+    var first = result.total ? (result.page * result.size) + 1 : 0;
+    var last = Math.min(result.total, (result.page + 1) * result.size);
 
     document.getElementById("page").innerHTML =
       '<div class="page-head"><div><h2>Pedidos</h2><p>Prazo, separação, envio e pagamento.</p></div><div class="actions"><button class="ghost" data-action="export" data-kind="orders">Exportar CSV</button>' +
       (S.canWrite() ? '<button class="primary" data-action="new-order">+ Novo pedido</button>' : "") + '</div></div>' +
-      '<div class="toolbar"><input class="search" id="orderSearch" placeholder="Buscar por código, rastreio ou observação"><select id="orderStatus"><option value="">Todos os status</option>' + statusOptions + '</select></div>' +
-      '<section class="panel" id="ordersPanel">' + S.ordersTable(S.state.data.orders, both[1]) + "</section>";
+      '<div class="toolbar"><input class="search" id="orderSearch" value="' + S.e(S.state.orderQuery.search || "") + '" placeholder="Buscar por código, rastreio ou observação"><select id="orderStatus"><option value="">Todos os status</option>' + statusOptions + '</select></div>' +
+      '<section class="panel" id="ordersPanel">' + S.ordersTable(result.rows, core) + "</section>" +
+      '<div class="pager"><span>Mostrando ' + first + "–" + last + " de " + result.total + ' pedidos</span><div class="pager-actions">' +
+      '<button class="ghost mini" data-action="order-page" data-direction="-1"' + (result.page <= 0 ? " disabled" : "") + '>← Anterior</button>' +
+      '<strong>Página ' + pageNumber + " de " + totalPages + '</strong>' +
+      '<button class="ghost mini" data-action="order-page" data-direction="1"' + (result.page + 1 >= totalPages ? " disabled" : "") + '>Próxima →</button></div></div>';
   };
 
   S.productsTable = function (rows) {
