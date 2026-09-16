@@ -71,13 +71,12 @@
     return map[message] || message;
   };
 
-  S.authRedirect = function (kind) {
+  S.authRedirect = function () {
     var base = cfg.productionUrl || window.location.origin;
     var url = new URL(base);
     url.pathname = "/";
     url.hash = "";
     url.search = "";
-    if (kind) url.searchParams.set("auth", kind);
     return url.toString();
   };
 
