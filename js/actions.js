@@ -237,7 +237,7 @@
         var resend = await S.sb.auth.resend({
           type: "signup",
           email: S.state.pendingEmail,
-          options: { emailRedirectTo: S.authRedirect("confirmed") }
+          options: { emailRedirectTo: S.authRedirect() }
         });
         b.disabled = false;
         if (resend.error) throw resend.error;
@@ -415,7 +415,7 @@
         var signup = await S.sb.auth.signUp({
           email: String(f.email).trim(),
           password: String(f.password),
-          options: { emailRedirectTo: S.authRedirect("confirmed") }
+          options: { emailRedirectTo: S.authRedirect() }
         });
         if (signup.error) throw signup.error;
         if (!signup.data.session) {
