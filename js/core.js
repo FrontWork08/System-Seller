@@ -169,10 +169,16 @@
   };
 
   S.navItems = function () {
-    var items = [["dashboard", "▦", "Visão geral"], ["orders", "◫", "Pedidos"], ["products", "□", "Produtos"], ["customers", "◎", "Clientes"]];
-    if (S.canAdmin()) items.push(["finance", "R$", "Financeiro"]);
-    items.push(["stores", "⌂", "Lojas"]);
-    if (S.canAdmin()) items.push(["audit", "≡", "Auditoria"]);
+    var items = [
+      ["dashboard", "▦", "Visão geral", "Operação"],
+      ["orders", "◫", "Pedidos", "Operação"],
+      ["products", "□", "Produtos", "Operação"],
+      ["customers", "◎", "Clientes", "Operação"]
+    ];
+    if (S.canAdmin()) items.push(["finance", "R$", "Financeiro", "Gestão"]);
+    items.push(["stores", "⌂", "Lojas", "Gestão"]);
+    if (S.canAdmin()) items.push(["audit", "≡", "Auditoria", "Gestão"]);
+    items.push(["profile", "◉", "Perfil", "Conta"]);
     return items;
   };
 
@@ -186,13 +192,31 @@
         return '<option value="' + o.id + '"' + (o.id === S.state.orgId ? " selected" : "") + ">" + S.e(o.name) + "</option>";
       }).join("") + "</select>";
     }
+
+    var navHtml = "";
+    var group = "";
+    nav.forEach(function (item) {
+      if (item[3] !== group) {
+        group = item[3];
+        navHtml += '<div class="nav-label">' + S.e(group) + '</div>';
+      }
+      navHtml += '<button data-action="nav" data-page="' + item[0] + '" class="' + (S.state.page === item[0] ? "active" : "") + '">' +
+        '<b>' + item[1] + '</b><span>' + item[2] + '</span></button>';
+    });
+
+    var email = S.state.session.user.email || "Usuário";
+    var initial = email.charAt(0).toUpperCase();
+
     S.app.innerHTML = '<div class="shell"><aside class="sidebar">' +
       '<div class="brand"><div class="brand-mark">SS</div><span>System Seller</span></div>' +
-      '<nav class="nav">' + nav.map(function (item) {
-        return '<button data-action="nav" data-page="' + item[0] + '" class="' + (S.state.page === item[0] ? "active" : "") + '"><b>' + item[1] + "</b><span>" + item[2] + "</span></button>";
-      }).join("") + "</nav>" +
-      '<div class="sidebar-foot"><div class="userbox"><strong>' + S.e(S.state.session.user.email || "Usuário") + "</strong><span>" + S.e(S.state.role || "") + '</span></div><button class="secondary" data-action="logout">Sair</button></div></aside>' +
-      '<section class="main"><header class="topbar"><div class="topbar-left"><h1>' + S.e(org ? org.name : "System Seller") + "</h1><p>" + S.e(S.state.session.user.email || "") + '</p></div><div class="top-actions">' + selector + S.badge(roleLabel, "info") + '</div></header><div class="content" id="page"><div class="boot"><div class="spinner"></div><p>Carregando…</p></div></div></section></div>';
+      '<nav class="nav">' + navHtml + '</nav>' +
+      '<div class="sidebar-foot"><button class="userbox" data-action="nav" data-page="profile"><span class="avatar-mini">' + S.e(initial) + '</span><span class="userbox-copy"><strong>' + S.e(email) + '</strong><small>' + S.e(roleLabel) + '</small></span></button>' +
+      '<button class="logout-btn" data-action="logout">↪ <span>Sair da conta</span></button></div></aside>' +
+      '<button class="mobile-scrim" data-action="close-sidebar" aria-label="Fechar menu"></button>' +
+      '<section class="main"><header class="topbar"><button class="mobile-menu" data-action="toggle-sidebar" aria-label="Abrir menu">☰</button>' +
+      '<div class="topbar-left"><h1>' + S.e(org ? org.name : "System Seller") + '</h1><p>' + S.e(email) + '</p></div>' +
+      '<div class="top-actions">' + selector + S.badge(roleLabel, "info") + '<button class="profile-chip" data-action="nav" data-page="profile" aria-label="Abrir perfil"><span>' + S.e(initial) + '</span><b>Perfil</b></button></div>' +
+      '</header><div class="content" id="page"><div class="boot"><div class="spinner"></div><p>Carregando…</p></div></div></section></div>';
   };
 
   S.loadPage = async function () {
@@ -207,6 +231,7 @@
       else if (S.state.page === "finance" && S.canAdmin()) await S.pageFinance();
       else if (S.state.page === "stores") await S.pageStores();
       else if (S.state.page === "audit" && S.canAdmin()) await S.pageAudit();
+      else if (S.state.page === "profile") await S.pageProfile();
       else {
         S.state.page = "dashboard";
         S.renderShell();
