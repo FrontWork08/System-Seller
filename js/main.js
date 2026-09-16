@@ -2,6 +2,12 @@
   "use strict";
   var S = window.SS;
 
+  var official = new URL(S.cfg.productionUrl);
+  if (window.location.hostname.endsWith(".vercel.app") && window.location.hostname !== official.hostname) {
+    window.location.replace(official.origin + window.location.pathname + window.location.search + window.location.hash);
+    return;
+  }
+
   function announceAuthResult() {
     if (S.state.authMarker === "confirmed") {
       S.toast("E-mail confirmado com sucesso. Sua conta está pronta para uso.");
