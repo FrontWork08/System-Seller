@@ -60,15 +60,14 @@
   };
 
   S.errText = function (err) {
-    var message = err && err.message ? err.message : "Ocorreu um erro inesperado.";
-    var map = {
-      "Email not confirmed": "Confirme seu e-mail antes de entrar.",
-      "Invalid login credentials": "E-mail ou senha incorretos.",
-      "User already registered": "Já existe uma conta com este e-mail.",
-      "Email rate limit exceeded": "Muitas tentativas de envio. Aguarde alguns minutos e tente novamente.",
-      "For security purposes, you can only request this after 60 seconds.": "Aguarde um minuto antes de solicitar outro e-mail."
-    };
-    return map[message] || message;
+    var message = err && err.message ? String(err.message) : "Ocorreu um erro inesperado.";
+    var lower = message.toLowerCase();
+    if (lower === "email not confirmed") return "Confirme seu e-mail antes de entrar.";
+    if (lower === "invalid login credentials") return "E-mail ou senha incorretos.";
+    if (lower === "user already registered") return "Já existe uma conta com este e-mail.";
+    if (lower.indexOf("email rate limit exceeded") !== -1) return "Limite temporário de e-mails atingido. O serviço de e-mail do Supabase está no limite; aguarde e tente novamente mais tarde.";
+    if (lower.indexOf("for security purposes") !== -1 && lower.indexOf("60 seconds") !== -1) return "Aguarde um minuto antes de solicitar outro e-mail.";
+    return message;
   };
 
   S.authRedirect = function () {
