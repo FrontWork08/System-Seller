@@ -259,8 +259,7 @@
         if (!currentPath) return;
         var clearProfile = await S.sb.from("profiles").update({ avatar_path: null, updated_at: new Date().toISOString() }).eq("id", S.state.session.user.id);
         if (clearProfile.error) throw clearProfile.error;
-        var removed = await S.sb.storage.from("profile-photos").remove([currentPath]);
-        if (removed.error) throw removed.error;
+        await S.sb.storage.from("profile-photos").remove([currentPath]);
         await S.loadProfile();
         S.renderShell();
         await S.pageProfile();
