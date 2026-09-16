@@ -32,6 +32,20 @@
       '<section class="auth-card-wrap"><div class="auth-card"><h2>' + title + '</h2><p class="sub">' + sub + "</p>" + tabs + form + "</div></section></div>";
   };
 
+  S.renderEmailConfirmation = function (email) {
+    S.state.pendingEmail = String(email || "").trim();
+    S.app.innerHTML = '<div class="auth-wrap"><section class="auth-hero"><div class="brand"><div class="brand-mark">SS</div><span>System Seller</span></div>' +
+      '<div class="auth-copy"><h1>Sua operação começa com uma conta segura.</h1><p>Antes de liberar o acesso aos dados da empresa, confirmamos que o e-mail realmente pertence a você.</p></div>' +
+      '<div class="feature-row"><div class="feature"><strong>Confirmação obrigatória</strong><span>Evita cadastros com e-mails indevidos.</span></div><div class="feature"><strong>Acesso protegido</strong><span>Seu ambiente só é criado após a validação.</span></div><div class="feature"><strong>Dados isolados</strong><span>Cada empresa acessa somente seus próprios registros.</span></div></div></section>' +
+      '<section class="auth-card-wrap"><div class="auth-card confirm-card"><div class="confirm-icon" aria-hidden="true">✉</div><div class="confirm-kicker">Conta criada</div><h2>Confirme seu e-mail</h2>' +
+      '<p class="sub">Enviamos um link de confirmação para:</p><div class="confirm-email">' + S.e(S.state.pendingEmail) + '</div>' +
+      '<div class="confirm-steps"><div><b>1</b><span>Abra sua caixa de entrada.</span></div><div><b>2</b><span>Toque em <strong>Confirmar e-mail</strong>.</span></div><div><b>3</b><span>Você voltará ao System Seller com o acesso liberado.</span></div></div>' +
+      '<div class="note">Não encontrou? Verifique também Spam, Lixo eletrônico e Promoções. O link pode levar alguns instantes para chegar.</div>' +
+      '<div class="confirm-actions"><button class="primary full" type="button" data-action="resend-confirmation">Reenviar e-mail de confirmação</button>' +
+      '<button class="secondary full" type="button" data-action="auth-mode" data-mode="login">Já confirmei · ir para o login</button>' +
+      '<button class="link-btn" type="button" data-action="auth-mode" data-mode="signup">Usar outro e-mail</button></div></div></section></div>';
+  };
+
   S.renderRecovery = function () {
     S.app.innerHTML = '<section class="panel recovery"><div class="panel-body"><div class="brand"><div class="brand-mark">SS</div><span>System Seller</span></div>' +
       '<h2>Defina uma nova senha</h2><p class="muted">O link de recuperação foi validado. Escolha uma nova senha forte.</p>' +
