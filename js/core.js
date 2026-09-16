@@ -2,7 +2,9 @@
   "use strict";
 
   var cfg = window.SYSTEM_SELLER_CONFIG;
-  var authMarker = new URL(window.location.href).searchParams.get("auth");
+  var initialUrl = new URL(window.location.href);
+  var authMarker = initialUrl.searchParams.get("auth");
+  var inviteToken = initialUrl.searchParams.get("invite");
   var sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabasePublishableKey, {
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
   });
@@ -12,7 +14,7 @@
     sb: sb,
     app: document.getElementById("app"),
     toastEl: document.getElementById("toast"),
-    state: { session: null, recovery: false, authMarker: authMarker, pendingEmail: null, profile: null, orgs: [], roles: {}, orgId: null, role: null, page: "dashboard", data: {} },
+    state: { session: null, recovery: false, authMarker: authMarker, inviteToken: inviteToken, pendingEmail: null, profile: null, orgs: [], roles: {}, orgId: null, role: null, page: "dashboard", orderQuery: { page: 0, size: 50, search: "", status: "" }, data: {} },
     statusLabel: { new: "Novo", picking: "Separando", packing: "Embalando", ready: "Pronto", shipped: "Enviado", delivered: "Entregue", cancelled: "Cancelado" },
     paymentLabel: { pending: "Pendente", partial: "Parcial", paid: "Pago", refunded: "Reembolsado" },
     transition: { new: "picking", picking: "packing", packing: "ready", ready: "shipped", shipped: "delivered" }
@@ -76,17 +78,32 @@
     url.pathname = "/";
     url.hash = "";
     url.search = "";
+    if (S.state && S.state.inviteToken) url.searchParams.set("invite", S.state.inviteToken);
     return url.toString();
   };
 
   S.clearAuthMarker = function () {
     S.state.authMarker = null;
     if (window.history && window.history.replaceState) {
-      window.history.replaceState({}, document.title, window.location.pathname);
+      var url = new URL(window.location.href);
+      url.searchParams.delete("auth");
+      window.history.replaceState({}, document.title, url.pathname + url.search);
+    }
+  };
+
+  S.clearInviteMarker = function () {
+    S.state.inviteToken = null;
+    if (window.history && window.history.replaceState) {
+      var url = new URL(window.location.href);
+      url.searchParams.delete("invite");
+      window.history.replaceState({}, document.title, url.pathname + url.search);
     }
   };
   S.canAdmin = function () { return S.state.role === "owner" || S.state.role === "admin"; };
   S.canWrite = function () { return S.canAdmin() || S.state.role === "operator"; };
+  S.roleLabel = function (role) {
+    return role === "owner" ? "Proprietário" : role === "admin" ? "Administrador" : role === "operator" ? "Operador" : "Visualização";
+  };
   S.currentOrg = function () { return S.state.orgs.find(function (o) { return o.id === S.state.orgId; }); };
 
   S.profileName = function () {
@@ -192,6 +209,7 @@
     ];
     if (S.canAdmin()) items.push(["finance", "R$", "Financeiro", "Gestão"]);
     items.push(["stores", "⌂", "Lojas", "Gestão"]);
+    if (S.canAdmin()) items.push(["team", "♙", "Equipe", "Gestão"]);
     if (S.canAdmin()) items.push(["audit", "≡", "Auditoria", "Gestão"]);
     items.push(["profile", "◉", "Perfil", "Conta"]);
     return items;
@@ -200,7 +218,7 @@
   S.renderShell = function () {
     var org = S.currentOrg();
     var nav = S.navItems();
-    var roleLabel = S.state.role === "owner" ? "Proprietário" : S.state.role === "admin" ? "Administrador" : S.state.role === "operator" ? "Operador" : "Visualização";
+    var roleLabel = S.roleLabel(S.state.role);
     var selector = "";
     if (S.state.orgs.length > 1) {
       selector = '<select class="org-select" id="orgSelect">' + S.state.orgs.map(function (o) {
@@ -244,6 +262,7 @@
       else if (S.state.page === "customers") await S.pageCustomers();
       else if (S.state.page === "finance" && S.canAdmin()) await S.pageFinance();
       else if (S.state.page === "stores") await S.pageStores();
+      else if (S.state.page === "team" && S.canAdmin()) await S.pageTeam();
       else if (S.state.page === "audit" && S.canAdmin()) await S.pageAudit();
       else if (S.state.page === "profile") await S.pageProfile();
       else {
