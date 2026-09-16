@@ -94,6 +94,14 @@
   };
 
   S.loadContext = async function () {
+    if (S.state.inviteToken) {
+      var redeem = await S.sb.rpc("redeem_team_invite", { p_token: S.state.inviteToken });
+      if (redeem.error) throw redeem.error;
+      S.state.orgId = redeem.data || S.state.orgId;
+      S.clearInviteMarker();
+      S.toast("Convite aceito. Você já faz parte da equipe.");
+    }
+
     await S.loadProfile();
     var memberships = await S.sb.from("memberships").select("organization_id,role");
     if (memberships.error) throw memberships.error;
