@@ -210,6 +210,7 @@
     if (S.canAdmin()) items.push(["finance", "R$", "Financeiro", "Gestão"]);
     items.push(["stores", "⌂", "Lojas", "Gestão"]);
     if (S.canAdmin()) items.push(["team", "♙", "Equipe", "Gestão"]);
+    if (S.canAdmin()) items.push(["backup", "⇩", "Backup", "Gestão"]);
     if (S.canAdmin()) items.push(["audit", "≡", "Auditoria", "Gestão"]);
     items.push(["profile", "◉", "Perfil", "Conta"]);
     return items;
@@ -263,6 +264,7 @@
       else if (S.state.page === "finance" && S.canAdmin()) await S.pageFinance();
       else if (S.state.page === "stores") await S.pageStores();
       else if (S.state.page === "team" && S.canAdmin()) await S.pageTeam();
+      else if (S.state.page === "backup" && S.canAdmin()) await S.pageBackup();
       else if (S.state.page === "audit" && S.canAdmin()) await S.pageAudit();
       else if (S.state.page === "profile") await S.pageProfile();
       else {
