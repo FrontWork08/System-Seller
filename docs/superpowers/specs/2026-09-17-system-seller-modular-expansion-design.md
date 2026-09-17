@@ -14,52 +14,29 @@ The expansion must preserve the existing authentication, organization isolation,
 
 Use a modular evolution of the current application.
 
-The existing core remains responsible for:
+The existing core remains responsible for authentication, organizations/stores, customers/products, orders/order items, payments/financial transactions, team membership/permissions, audit and backup/restore.
 
-- authentication;
-- organizations and stores;
-- customers and products;
-- orders and order items;
-- payments and financial transactions;
-- team membership and permissions;
-- audit;
-- backup and restore.
+New capabilities are implemented as separate frontend modules and separate database tables/functions where appropriate. Modules communicate through stable IDs and database functions rather than depending on another module's internal implementation.
 
-New capabilities are implemented as separate frontend modules and separate database tables/functions where appropriate. New modules must not depend on another module's internal implementation. They communicate through stable record identifiers and database functions.
+All organization-owned data includes `organization_id` and follows the existing Row Level Security model. Critical multi-record operations use transactional RPCs rather than unrelated browser writes.
 
-All organization-owned data must include `organization_id` and follow the existing Row Level Security model. Critical multi-record operations must be transactional RPCs rather than a sequence of unrelated browser writes.
+Server-side jobs that require secrets or privileged outbound calls, such as business-notification email delivery, use Supabase server-side functionality/Edge Functions with secrets kept out of the browser.
 
-## 3. Scope
+## 3. Functional scope
 
 ### 3.1 Quotes
 
-Add a complete quotation workflow.
+Add a quotation workflow containing organization, customer, optional store/channel, items, quantities, unit prices, discounts/shipping when applicable, optional expiration date, notes, attachments, status and status history.
 
-A quote contains:
+A quote can remain valid indefinitely when no expiration is set. Expired quotes are visually identified.
 
-- organization;
-- customer;
-- optional store/channel;
-- items;
-- quantities;
-- unit prices, including customer-specific or manually customized prices;
-- discounts and shipping when applicable;
-- optional expiration date;
-- notes;
-- attachments;
-- status and status history.
+Approval does not automatically create an order. An approved quote exposes **Convert to order**. Conversion copies customer, items, prices, dates, notes and relevant references into a normal order and stores a permanent quote/order link.
 
-A quote can remain valid without an expiration date. When an expiration date is set, the UI must clearly show expired quotes.
-
-Approval does not automatically create an order. An approved quote exposes a **Convert to order** action. Conversion copies the customer, items, prices, due/delivery information, notes and relevant references into a normal order, and stores a permanent link between quote and order.
-
-Conversion must be idempotent so the same quote cannot accidentally generate multiple orders.
+Conversion is transactional and idempotent so the same quote cannot accidentally generate multiple orders.
 
 ### 3.2 Production workflow
 
-Add production tracking to orders.
-
-Provide default stages:
+Add production tracking to orders with these default stages:
 
 1. Aguardando pagamento
 2. Na fila
@@ -69,222 +46,95 @@ Provide default stages:
 6. Enviado/Retirada
 7. Entregue
 
-Quotes remain a separate pre-order state and are not themselves a production stage.
+Quotes are pre-order records and are not production stages.
 
-Each organization can:
+Each organization can add, rename, reorder and deactivate stages. A stage can be permanently deleted only when no historical or active record references it. Historical entries remain readable even after a stage is renamed or deactivated.
 
-- add stages;
-- rename stages;
-- reorder stages;
-- deactivate/remove unused stages when safe.
-
-Historic records must remain readable even if a stage is later renamed or deactivated.
-
-Each order may store:
-
-- current production stage;
-- stage history;
-- planned start;
-- planned finish;
-- estimated duration in minutes;
-- delivery due date;
-- optional responsible team member;
-- operational notes.
+Each order may store current production stage, stage history, planned start, planned finish, estimated duration in minutes, delivery due date, optional responsible team member and operational notes.
 
 ### 3.3 Production calendar
 
-Add daily and weekly calendar views using the production and delivery fields already stored on orders.
+Add daily and weekly calendar views based on order production/delivery fields. Surface planned starts/finishes, delivery deadlines, overdue work, duration estimates and current stage.
 
-The calendar must surface:
-
-- planned production starts;
-- planned production finishes;
-- delivery deadlines;
-- overdue work;
-- duration estimates;
-- current production stage.
-
-Do not duplicate order data into an independent calendar source of truth.
+The calendar is a view of order data, not a separate source of truth.
 
 ### 3.4 Customer-specific pricing
 
-Support customer-specific prices per product.
+Support a saved preferred price for each `(customer, product)` pair plus the historical prices actually charged in quotes and orders.
 
-The system must provide both:
-
-- a saved preferred price for a `(customer, product)` pair;
-- historical prices actually charged in quotes and orders.
-
-When creating a quote/order, the saved customer price can prefill the item price, but the user can still override the final unit price for that transaction.
-
-Changes to saved prices must never rewrite historical orders or quotes.
+The saved price can prefill a quote/order item, while the final unit price remains manually editable per transaction. Changing the saved price never rewrites historical records.
 
 ### 3.5 Costs and profitability
 
-Track operational costs independently from sale price.
+Track costs independently from sale price, with categories for material, packaging, shipping paid by the company, marketplace/payment fees, labor and other.
 
-Supported cost categories include:
+Costs can be linked to an entire order or a specific order item. Derive item cost/profit, order cost/profit and profit summaries by date range.
 
-- material;
-- packaging;
-- shipping paid by the company;
-- marketplace/payment fees;
-- labor;
-- other.
-
-Costs can be linked to:
-
-- an entire order;
-- a specific order item.
-
-The system must derive and display:
-
-- item cost;
-- item gross profit;
-- order cost;
-- order gross profit;
-- profit summaries by date range.
-
-Sale price remains manual. Cost tracking must not automatically change, recommend or override the selling price.
+Sale price remains manual. Cost tracking must not calculate, recommend or override selling price.
 
 ### 3.6 Optional 3D-printing module
 
-The 3D-printing capability is optional per organization and is enabled from organization settings.
+The 3D-printing module is optional per organization and is enabled in organization settings. When disabled, 3D-specific navigation and fields are hidden.
 
-When disabled, 3D-specific navigation and fields are hidden.
+When enabled, it supports 3D model/job references, STL/3MF attachments, material, color, estimated/actual print duration, finishing notes and material consumption.
 
-When enabled, the module supports operational metadata such as:
-
-- 3D-print job/model references;
-- STL/3MF and related attachments;
-- material;
-- color;
-- estimated/actual print duration;
-- finishing notes;
-- material consumption.
-
-The selling price for 3D work remains fully manual. The system may record internal costs, but it must not calculate or suggest a selling price automatically.
+The selling price for 3D work remains fully manual. Internal costs may be recorded, but the system does not calculate or suggest a sale price.
 
 ### 3.7 3D material inventory
 
-Track filament/material rolls individually.
+Track filament/material rolls individually with material type, color, brand, initial weight, remaining weight, purchase cost, acquisition date, status and notes.
 
-Each roll can store:
-
-- material type;
-- color;
-- brand;
-- initial weight;
-- current/remaining weight;
-- purchase cost;
-- acquisition date;
-- status;
-- notes.
-
-Material consumption is stored as immutable movement records and may be associated with an order or order item.
-
-A consumption operation must update remaining weight transactionally. Negative remaining weight is not allowed.
-
-The system should expose low-material warnings using organization-configurable thresholds.
+Material consumption is stored as movement records and may reference an order/order item. Consumption updates remaining weight transactionally and never allows negative stock. Low-material alerts use organization-configurable thresholds.
 
 ### 3.8 Attachments
 
 Allow attachments on quotes and orders, including images, PDFs, STL, 3MF and other explicitly allowed file types.
 
-Use private Supabase Storage paths scoped by organization and record.
+Use private Supabase Storage scoped by organization and record. Metadata includes organization, entity type/id, storage path, original filename, MIME type, size, uploader and creation time.
 
-Attachment metadata must include at least:
-
-- organization;
-- entity type;
-- entity id;
-- storage path;
-- original filename;
-- MIME type;
-- size;
-- uploader;
-- created time.
-
-Validate file type and size before finalizing upload metadata. Access must use authenticated authorization and private/signed access rather than public buckets for business files.
+Validate allowed type and size. Business files are never public; access uses authenticated authorization and private/signed URLs.
 
 ### 3.9 Payments and collections UX
 
-Build on the existing partial-payment implementation.
+Build on the existing partial-payment implementation. Order detail prominently shows total, received amount, remaining balance, payment status, payment history and payment method for each entry.
 
-Order detail should make the following immediately visible:
+Add optional due date for outstanding balance, payment-proof attachments and clearer collection messaging.
 
-- total;
-- received amount;
-- remaining balance;
-- payment status;
-- payment history;
-- method used for each payment.
+Provide a copyable customer-facing collection summary generated from live order data. WhatsApp sending is out of scope now, but this message model must be reusable by a future integration.
 
-Add optional due date for outstanding balance, proof/attachment support, and clearer collection messaging.
+### 3.10 Notifications and email
 
-Provide a copyable customer-facing collection summary generated from live order data. WhatsApp sending itself is out of scope for this version, but the message-generation boundary must be reusable by a future integration.
+Add notifications for overdue orders, delivery due soon, outstanding payments, low product/material stock, production stalled beyond a configured threshold, failed email and offline-sync conflict.
 
-### 3.10 Internal notifications and email
+Channels in scope are in-app and email. WhatsApp remains future work.
 
-Add a notification subsystem for events such as:
+Notifications are deduplicated. A failed email never rolls back the business transaction that triggered it; failure is recorded and can be retried.
 
-- overdue orders;
-- delivery due soon;
-- outstanding payments;
-- low product/material inventory;
-- production item stopped in the same stage beyond a configured threshold;
-- failed outbound email;
-- offline synchronization conflict.
-
-Channels in scope:
-
-- in-app notifications;
-- email.
-
-WhatsApp is intentionally not integrated now, but notification payloads should be channel-neutral enough to support it later.
-
-Notifications must be deduplicated so recurring checks do not create repeated identical alerts.
-
-A failed email must not roll back the business operation that triggered it. Delivery failure is recorded for retry/visibility.
+Business notification emails are sent server-side so provider credentials never reach the browser.
 
 ### 3.11 Dashboard and reports
 
-Extend the dashboard with operational and financial indicators, including:
+Extend the dashboard with current-period revenue, amount receivable, overdue orders, due-today/soon work, average ticket, top products, top customers, sales by store/channel, recorded costs, gross profit, low-stock alerts and production workload.
 
-- current-period revenue;
-- amount still receivable;
-- overdue orders;
-- orders due today/soon;
-- average ticket;
-- top-selling products;
-- top customers by sales;
-- sales by store/channel;
-- estimated/recorded costs;
-- gross profit;
-- low inventory alerts;
-- production workload.
-
-Reports should support useful date ranges and CSV export. PDF export is required for formal business documents described below; other report PDFs can be added when justified during implementation.
+Reports support useful date ranges and CSV export. Formal PDFs are covered by the document module below.
 
 ### 3.12 Business documents
 
-Generate branded PDF documents using current database data.
-
-Required documents:
+Generate branded PDFs for:
 
 - quotation;
 - receipt/payment statement;
 - production/work order.
 
-Documents include organization logo and company information and support configurable optional fields.
+Documents include organization logo/company information and configurable optional fields.
 
-Generation must use current server-authorized data rather than trusting arbitrary values provided by the browser.
+Generation starts from canonical, server-authorized data. Persisted document records store the source entity, generation time and immutable snapshot metadata so later record edits do not pretend that an older generated document contained newer information.
 
 ### 3.13 PWA and controlled offline mode
 
 Make System-Seller installable as a Progressive Web App.
 
-Offline capabilities in scope:
+Offline capabilities:
 
 - view cached operational data;
 - create draft/new quotes;
@@ -292,169 +142,113 @@ Offline capabilities in scope:
 - update permitted production stages;
 - update operational notes.
 
-Operations that require live connectivity:
+Operations requiring live connectivity:
 
-- payments and refunds;
-- user/team/permission changes;
+- payments/refunds;
+- team/permission changes;
 - destructive operations;
 - critical stock movements;
-- 3D material consumption that changes authoritative inventory;
+- 3D material consumption affecting authoritative inventory;
 - backup/restore;
 - sensitive financial writes.
 
-Offline writes are placed in a local queue with a client mutation id, record version/base timestamp, user and local timestamp.
+Offline mutations use a local queue containing a client mutation ID, base record version/timestamp, user and local timestamp. Synchronization is idempotent. If the server record changed after the client's base version, the client never silently overwrites it; a sync conflict is created for explicit resolution.
 
-On reconnect, synchronization must be idempotent. If the server record changed after the client's base version, the system must not silently overwrite it. A synchronization conflict is recorded and surfaced for resolution.
+## 4. Navigation and UX
 
-## 4. Navigation and user experience
+Group navigation into:
 
-Group the application navigation into logical areas.
+**Operação:** Dashboard, Pedidos, Orçamentos, Produção, Calendário.
 
-### Operação
+**Comercial:** Clientes, Produtos, Preços especiais, Documentos.
 
-- Dashboard
-- Pedidos
-- Orçamentos
-- Produção
-- Calendário
+**Financeiro:** Receitas/despesas, Pagamentos pendentes, Custos, Lucro, Relatórios.
 
-### Comercial
+**Estoque:** Produtos/estoque, Movimentações, Estoque 3D when enabled.
 
-- Clientes
-- Produtos
-- Preços especiais
-- Documentos
+**Gestão:** Equipe, Lojas/canais, Notificações, Backup, Auditoria, Configurações.
 
-### Financeiro
+Mobile prioritizes quick order/quote creation, customer lookup, production-stage changes and calendar use instead of wide tables.
 
-- Receitas/despesas
-- Pagamentos pendentes
-- Custos
-- Lucro
-- Relatórios
-
-### Estoque
-
-- Produtos/estoque
-- Movimentações
-- Estoque 3D (only when enabled)
-
-### Gestão
-
-- Equipe
-- Lojas/canais
-- Notificações
-- Backup
-- Auditoria
-- Configurações
-
-The responsive/mobile experience prioritizes quick creation of orders/quotes, customer lookup, production-stage updates and calendar viewing instead of wide desktop tables.
-
-Provide clear visual states for:
-
-- overdue;
-- due today;
-- awaiting payment;
-- partially paid;
-- low stock;
-- stalled production;
-- pending offline synchronization;
-- synchronization conflict.
+Provide clear states for overdue, due today, awaiting payment, partially paid, low stock, stalled production, pending offline sync and sync conflict.
 
 ## 5. Authorization
 
-Continue using the existing roles (`owner`, `admin`, `operator`, `viewer`) while enforcing finer-grained behavior inside each module.
+Continue using `owner`, `admin`, `operator` and `viewer` while enforcing module-specific behavior in the database.
 
-Expected baseline:
+Baseline:
 
-- owner/admin: organization configuration, stage configuration, module enablement, team, sensitive finance, backup and audit;
-- operator: operational order/quote work, production updates and notes, subject to existing organization membership;
-- viewer: read-only access to allowed operational views;
-- sensitive financial and administrative information remains restricted according to existing policy.
+- owner/admin: organization/module/stage configuration, team, sensitive finance, backup and audit;
+- operator: operational order/quote work, production updates and notes subject to organization membership;
+- viewer: read-only access to allowed operational views.
 
-Authorization is enforced in the database, not only by hiding UI controls.
+Sensitive financial/administrative data remains restricted. Hiding UI controls alone is never considered authorization.
 
 ## 6. Data and transaction boundaries
 
-The order remains the primary operational record after quote conversion.
+The order remains the main operational record after quote conversion. New tables reference existing core records instead of copying them unnecessarily.
 
-New records reference the existing core rather than copying it unnecessarily.
+Critical transactional operations include quote-to-order conversion, payment/refund, product-stock decrement/restore, 3D-material consumption/restore and production transitions with side effects.
 
-Important transactional operations include:
-
-- quote to order conversion;
-- payment/refund;
-- product inventory decrement/restore;
-- 3D material consumption/restore;
-- production-stage transitions where side effects exist.
-
-Every client-generated mutation that can be retried should carry an idempotency key where practical.
+Retryable client mutations use idempotency keys where practical.
 
 ## 7. Error handling
 
-Business operations return structured errors suitable for user-facing messages without exposing privileged internals.
+Business operations return structured user-safe errors without exposing privileged internals.
 
-Email, document-generation and notification side effects must be decoupled where failure should not invalidate the primary business transaction.
+Email and notification delivery failures are decoupled when failure should not invalidate the primary business transaction.
 
-Offline conflicts must be explicit; last-write-wins is not acceptable for conflicting business edits.
+Offline conflicts are explicit; conflicting business edits never use silent last-write-wins.
 
 ## 8. Backup and restore
 
-Extend organization backup coverage to all new durable business tables.
+Extend organization backup coverage to all new durable business tables and files.
 
-Restore must preserve:
+Provide two owner-only backup products:
 
-- relational links;
-- quote/order conversion links;
-- production history;
-- special pricing;
-- costs;
-- notification records when included by policy;
-- 3D inventory and material movements;
-- attachment metadata.
+1. **Quick JSON backup** — structured database data and attachment/file manifest, suitable for frequent operational backups and restoring records when files already remain in Storage.
+2. **Full portable backup archive** — a downloadable archive containing `backup.json` plus private organization-owned attachments/documents required for portability.
 
-Binary Storage files require an explicit backup policy separate from JSON metadata. The implementation plan must decide whether operational export includes downloadable binaries or documents the Storage backup dependency clearly.
+Full restore accepts the portable archive, validates schema/version/organization ownership, restores records in dependency order, re-uploads included private files and restores their metadata/path relationships. Missing or invalid files are reported explicitly instead of silently ignored.
 
-Restore remains owner-only and must use server-side validation.
+Restore preserves relational links, quote/order conversion links, production history, special pricing, costs, 3D inventory/movements, attachment metadata and generated-document metadata.
+
+Backup/restore remains owner-only and server-validated. Current backups remain supported through versioned compatibility/migrations rather than being invalidated by the new format.
 
 ## 9. Security
 
 Requirements:
 
 - RLS on all organization-owned tables;
-- no service-role or privileged credentials in the browser;
-- private Storage for business attachments;
-- size/type validation for uploads;
+- no service-role/provider secrets in browser code;
+- private Storage for business files;
+- upload type/size validation;
 - signed/authenticated file access;
 - RPC authorization for critical operations;
 - audit sensitive changes;
-- keep current cross-organization isolation guarantees.
+- preserve cross-organization isolation guarantees.
 
-The existing Auth warning for leaked-password protection should be treated as a production-hardening item, but it is independent of this modular expansion.
+The existing Auth warning for leaked-password protection remains a production-hardening item independent of this expansion.
 
 ## 10. Testing strategy
 
-New modules require both isolated tests and end-to-end business-flow validation.
+Cover both isolated modules and end-to-end high-risk flows:
 
-High-risk flows to cover:
-
-- quote creation, approval and one-time conversion to order;
-- custom/customer-specific price preservation;
-- partial payment and remaining balance;
-- refund behavior;
-- product stock decrement and cancellation restore;
-- cost and profit calculations;
-- 3D roll consumption and prevention of negative stock;
-- production stage/history behavior;
+- quote creation/approval/one-time conversion;
+- customer-specific/custom price preservation;
+- partial payment, remaining balance and refund;
+- product-stock decrement and cancellation restore;
+- cost/profit calculations;
+- 3D roll consumption and negative-stock prevention;
+- production stage/history;
 - role permissions;
 - cross-organization isolation;
 - private attachment access;
 - notification deduplication;
-- offline queue retry/idempotency;
-- offline conflict detection;
-- backup/restore of newly introduced records.
+- offline retry/idempotency/conflict detection;
+- quick and full backup/restore.
 
-CI must continue validating JavaScript syntax/static references/security checks and should be expanded as new modules are introduced rather than waiting until the end of the project.
+CI continues validating JavaScript syntax/static references/security checks and expands incrementally as modules are added.
 
 ## 11. Frontend modularization
 
@@ -475,20 +269,16 @@ Introduce focused modules, for example:
 - `js/pwa.js`
 - `js/offline-sync.js`
 
-Exact filenames can be adjusted during implementation, but responsibilities should stay isolated.
-
-Shared helpers belong in the core only when they are truly generic.
+Exact filenames may change during implementation, but responsibilities remain isolated. Shared helpers move into the core only when genuinely generic.
 
 ## 12. Delivery sequencing
 
-Implementation should be incremental so each phase leaves the system deployable.
+Implement incrementally so each phase leaves the system deployable:
 
-Recommended dependency order:
-
-1. shared schema foundations/module settings;
+1. shared schema foundations and organization module settings;
 2. quotes + customer-specific pricing;
-3. quote-to-order conversion;
-4. production stages + history;
+3. safe quote-to-order conversion;
+4. production stages/history;
 5. production calendar;
 6. costs/profit;
 7. attachments;
@@ -498,18 +288,18 @@ Recommended dependency order:
 11. dashboard/reports;
 12. PWA shell + offline read cache;
 13. controlled offline mutation queue + conflict resolution;
-14. backup/restore extension and full regression pass.
+14. full portable backup/restore extension and complete regression pass.
 
-Payments already implemented remain part of the core and should be integrated into the new screens rather than rebuilt.
+Existing partial payments remain core functionality and are integrated into the new screens rather than rebuilt.
 
-## 13. Explicitly out of scope for this expansion
+## 13. Explicitly out of scope
 
 - Shopee API integration;
 - Mercado Livre API integration;
 - WhatsApp sending/integration;
 - automatic or suggested sale-price calculation for 3D printing;
-- unrestricted offline financial or inventory writes;
-- full application rewrite into a new framework.
+- unrestricted offline financial/inventory writes;
+- full rewrite into a new framework.
 
 ## 14. Success criteria
 
@@ -517,12 +307,13 @@ The expansion is successful when:
 
 - existing core workflows still pass regression checks;
 - organizations can use quotes, production, calendar, costs, special prices, attachments, notifications, reports and documents without marketplace integrations;
-- organizations can independently enable the optional 3D module;
-- 3D inventory accurately tracks rolls and material consumption;
+- each organization can independently enable the optional 3D module;
+- 3D inventory accurately tracks rolls/material consumption;
 - quote-to-order conversion is safe and non-duplicating;
-- partial payments and outstanding balance remain correct;
-- desktop and mobile workflows are practical;
+- partial payments/outstanding balances remain correct;
+- desktop/mobile workflows are practical;
 - PWA installation works;
 - permitted offline work synchronizes safely and conflicts are surfaced instead of overwritten;
-- new data remains isolated by organization and covered by backup/restore policy;
+- new data is isolated by organization;
+- quick JSON and full portable backups can be restored safely;
 - CI and database/security checks pass before release.
