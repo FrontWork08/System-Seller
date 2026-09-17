@@ -5,6 +5,16 @@
   var initialUrl = new URL(window.location.href);
   var authMarker = initialUrl.searchParams.get("auth");
   var inviteToken = initialUrl.searchParams.get("invite");
+  var themeOptions = {
+    ocean: { label: "Azul profissional", description: "Visual original com azul discreto." },
+    graphite: { label: "Grafite", description: "Neutro e menos saturado para uso prolongado." },
+    forest: { label: "Esmeralda", description: "Tons escuros com destaque verde." },
+    amber: { label: "Âmbar", description: "Tons quentes com contraste suave." }
+  };
+  var savedTheme = "ocean";
+  try { savedTheme = window.localStorage.getItem("systemSeller:theme") || "ocean"; } catch (e) {}
+  if (!themeOptions[savedTheme]) savedTheme = "ocean";
+  document.documentElement.setAttribute("data-theme", savedTheme);
   var sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabasePublishableKey, {
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
   });
@@ -14,10 +24,33 @@
     sb: sb,
     app: document.getElementById("app"),
     toastEl: document.getElementById("toast"),
-    state: { session: null, recovery: false, authMarker: authMarker, inviteToken: inviteToken, pendingEmail: null, profile: null, orgs: [], roles: {}, orgId: null, role: null, page: "dashboard", orderQuery: { page: 0, size: 50, search: "", status: "" }, data: {} },
+    state: { session: null, recovery: false, authMarker: authMarker, inviteToken: inviteToken, pendingEmail: null, profile: null, theme: savedTheme, orgs: [], roles: {}, orgId: null, role: null, page: "dashboard", orderQuery: { page: 0, size: 50, search: "", status: "" }, data: {} },
     statusLabel: { new: "Novo", picking: "Separando", packing: "Embalando", ready: "Pronto", shipped: "Enviado", delivered: "Entregue", cancelled: "Cancelado" },
     paymentLabel: { pending: "Pendente", partial: "Parcial", paid: "Pago", refunded: "Reembolsado" },
     transition: { new: "picking", picking: "packing", packing: "ready", ready: "shipped", shipped: "delivered" }
+  };
+
+  S.themeOptions = themeOptions;
+
+  S.applyTheme = function (theme, persist) {
+    if (!themeOptions[theme]) theme = "ocean";
+    S.state.theme = theme;
+    document.documentElement.setAttribute("data-theme", theme);
+    if (persist !== false) {
+      try { window.localStorage.setItem("systemSeller:theme", theme); } catch (e) {}
+    }
+    return theme;
+  };
+
+  S.themeCards = function () {
+    return Object.keys(themeOptions).map(function (key) {
+      var item = themeOptions[key];
+      var active = S.state.theme === key ? " selected" : "";
+      return '<button type="button" class="theme-card' + active + '" data-action="set-theme" data-theme="' + key + '">' +
+        '<span class="theme-preview theme-preview-' + key + '"><i></i><i></i><i></i></span>' +
+        '<span><strong>' + S.e(item.label) + '</strong><small>' + S.e(item.description) + '</small></span>' +
+        '<b class="theme-check">' + (active ? "✓" : "") + '</b></button>';
+    }).join("");
   };
 
   S.e = function (v) {
