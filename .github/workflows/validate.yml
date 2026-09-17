@@ -24,7 +24,7 @@ jobs:
           import json
           from pathlib import Path
           html=Path("index.html").read_text()
-          required=["styles.css","config.js","js/core.js","js/time.js","js/auth.js","js/pages.js","js/actions.js","js/main.js"]
+          required=["styles.css","config.js","js/core.js","js/time.js","js/auth.js","js/pages.js","js/actions.js","js/payments.js","js/main.js"]
           missing=[x for x in required if x not in html]
           if missing:
               raise SystemExit("Missing references: "+", ".join(missing))
