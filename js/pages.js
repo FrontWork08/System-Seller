@@ -460,6 +460,8 @@
 
       '<section class="panel theme-settings"><div class="panel-head"><h3>Aparência</h3><span class="muted">Escolha uma paleta mais confortável para trabalhar</span></div><div class="panel-body"><div class="theme-grid">' + S.themeCards() + '</div><div class="theme-note">O tema fica salvo na sua conta e também neste navegador.</div></div></section>' +
 
+      '<section class="panel support-settings"><div class="panel-head"><h3>Suporte e privacidade</h3><span class="muted">Atendimento: frontwork08@gmail.com</span></div><div class="panel-body"><p class="muted">Peça ajuda, comunique um problema de segurança ou solicite a exclusão da conta e dos dados.</p><div class="actions"><a class="secondary" href="/suporte">Central de suporte</a><a class="ghost" href="/privacidade">Privacidade</a><a class="ghost" href="/termos">Termos de Uso</a></div></div></section>' +
+
       '<div class="section-title">Operação</div><div class="stats-grid">' +
       '<div class="metric"><span>Pedidos totais</span><strong>' + orders.length + '</strong><small>' + openOrders.length + ' em andamento</small></div>' +
       '<div class="metric"><span>Entregues</span><strong>' + delivered + '</strong><small>' + cancelled + ' cancelados</small></div>' +

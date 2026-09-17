@@ -1,6 +1,12 @@
 User-agent: *
 Allow: /divulgar
+Allow: /privacidade
+Allow: /termos
+Allow: /suporte
 Allow: /marketing.css
+Allow: /branding.css
+Allow: /legal.css
+Allow: /assets/
 Allow: /sitemap.xml
 Disallow: /
 

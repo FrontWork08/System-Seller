@@ -15,6 +15,7 @@
       form = '<form data-form="signup"><div class="field"><label>E-mail</label><input name="email" type="email" autocomplete="email" required></div>' +
         '<div class="field"><label>Senha</label><input name="password" type="password" minlength="10" autocomplete="new-password" required></div>' +
         '<div class="field"><label>Confirmar senha</label><input name="confirm" type="password" minlength="10" autocomplete="new-password" required></div>' +
+        '<label class="consent-check"><input name="terms_accept" type="checkbox" required><span>Li e concordo com os <a href="/termos" target="_blank" rel="noopener">Termos de Uso</a> e a <a href="/privacidade" target="_blank" rel="noopener">Política de Privacidade</a>.</span></label>' +
         '<div class="note">Use ao menos 10 caracteres. Confirme seu e-mail antes do primeiro acesso quando a confirmação estiver habilitada.</div><br>' +
         '<button class="primary full" type="submit">Criar conta</button></form>';
     } else {
@@ -29,7 +30,7 @@
     S.app.innerHTML = '<div class="auth-wrap"><section class="auth-hero"><div class="brand"><img class="brand-logo" src="./assets/system-seller-logo.png" alt="System Seller"></div>' +
       '<div class="auth-copy"><h1>Controle a operação sem perder o controle do dinheiro.</h1><p>Gestão real de pedidos, estoque, clientes, prazos e caixa. Sem dados demonstrativos: tudo é gravado no banco da sua empresa.</p></div>' +
       '<div class="feature-row"><div class="feature"><strong>Estoque transacional</strong><span>Baixa e estorno ligados ao pedido.</span></div><div class="feature"><strong>Multiempresa</strong><span>Cada cliente acessa somente seus dados.</span></div><div class="feature"><strong>Auditoria</strong><span>Alterações importantes ficam registradas.</span></div></div></section>' +
-      '<section class="auth-card-wrap"><div class="auth-card"><div class="brand auth-brand-mobile"><img class="brand-logo" src="./assets/system-seller-logo.png" alt="System Seller"></div><h2>' + title + '</h2><p class="sub">' + sub + "</p>" + tabs + form + "</div></section></div>";
+      '<section class="auth-card-wrap"><div class="auth-card"><div class="brand auth-brand-mobile"><img class="brand-logo" src="./assets/system-seller-logo.png" alt="System Seller"></div><h2>' + title + '</h2><p class="sub">' + sub + "</p>" + tabs + form + '<div class="auth-legal"><a href="/suporte">Suporte</a><a href="/privacidade">Privacidade</a><a href="/termos">Termos</a></div></div></section></div>';
   };
 
   S.renderEmailConfirmation = function (email) {
@@ -43,7 +44,7 @@
       '<div class="note">Não encontrou? Verifique também Spam, Lixo eletrônico e Promoções. O link pode levar alguns instantes para chegar.</div>' +
       '<div class="confirm-actions"><button class="primary full" type="button" data-action="resend-confirmation">Reenviar e-mail de confirmação</button>' +
       '<button class="secondary full" type="button" data-action="auth-mode" data-mode="login">Já confirmei · ir para o login</button>' +
-      '<button class="link-btn" type="button" data-action="auth-mode" data-mode="signup">Usar outro e-mail</button></div></div></section></div>';
+      '<button class="link-btn" type="button" data-action="auth-mode" data-mode="signup">Usar outro e-mail</button></div><div class="auth-legal"><a href="/suporte">Suporte</a><a href="/privacidade">Privacidade</a><a href="/termos">Termos</a></div></div></section></div>';
   };
 
   S.renderRecovery = function () {
@@ -51,14 +52,14 @@
       '<h2>Defina uma nova senha</h2><p class="muted">O link de recuperação foi validado. Escolha uma nova senha forte.</p>' +
       '<form data-form="recovery"><div class="field"><label>Nova senha</label><input name="password" type="password" minlength="10" autocomplete="new-password" required></div>' +
       '<div class="field"><label>Confirmar senha</label><input name="confirm" type="password" minlength="10" autocomplete="new-password" required></div>' +
-      '<button class="primary" type="submit">Atualizar senha</button></form></div></section>';
+      '<button class="primary" type="submit">Atualizar senha</button></form><div class="auth-legal"><a href="/suporte">Suporte</a><a href="/privacidade">Privacidade</a><a href="/termos">Termos</a></div></div></section>';
   };
 
   S.renderOnboarding = function () {
     S.app.innerHTML = '<div class="auth-card-wrap"><section class="auth-card"><div class="brand"><img class="brand-logo" src="./assets/system-seller-logo.png" alt="System Seller"></div>' +
       '<h2>Cadastre sua empresa</h2><p class="sub">Isso cria o espaço isolado onde pedidos, estoque, clientes e financeiro serão guardados.</p>' +
       '<form data-form="onboarding"><div class="field"><label>Nome da empresa</label><input name="name" maxlength="120" required placeholder="Ex.: Minha Loja"></div>' +
-      '<button class="primary full" type="submit">Criar ambiente da empresa</button></form></section></div>';
+      '<button class="primary full" type="submit">Criar ambiente da empresa</button></form><div class="auth-legal"><a href="/suporte">Suporte</a><a href="/privacidade">Privacidade</a><a href="/termos">Termos</a></div></section></div>';
   };
 
   S.loadProfile = async function () {

@@ -29,6 +29,8 @@ Sistema web multiempresa para gestão de pedidos, estoque, clientes, prazos e fi
 - exportação CSV protegida contra células executáveis;
 - interface responsiva com quatro temas de aparência (azul, grafite, esmeralda e âmbar);
 - página pública com SEO, sitemap e robots separados do painel;
+- Política de Privacidade, Termos de Uso e central de suporte;
+- canal público de contato e solicitação de exclusão: frontwork08@gmail.com;
 - Shopee e Mercado Livre disponíveis como canais, sem simular integração antes das APIs oficiais.
 
 ## Segurança e integridade

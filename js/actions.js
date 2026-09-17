@@ -575,10 +575,14 @@
       } else if (form.dataset.form === "signup") {
         if (f.password !== f.confirm) throw new Error("As senhas não coincidem.");
         if (String(f.password).length < 10) throw new Error("A senha deve ter pelo menos 10 caracteres.");
+        if (f.terms_accept !== "on") throw new Error("Aceite os Termos de Uso e a Política de Privacidade para continuar.");
         var signup = await S.sb.auth.signUp({
           email: String(f.email).trim(),
           password: String(f.password),
-          options: { emailRedirectTo: S.authRedirect() }
+          options: {
+            emailRedirectTo: S.authRedirect(),
+            data: { terms_version: "2026-09-17", terms_accepted_at: new Date().toISOString() }
+          }
         });
         if (signup.error) throw signup.error;
         if (!signup.data.session) {

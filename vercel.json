@@ -44,6 +44,30 @@
       "destination": "/marketing.html"
     },
     {
+      "source": "/privacidade",
+      "destination": "/privacy.html"
+    },
+    {
+      "source": "/privacidade/",
+      "destination": "/privacy.html"
+    },
+    {
+      "source": "/termos",
+      "destination": "/terms.html"
+    },
+    {
+      "source": "/termos/",
+      "destination": "/terms.html"
+    },
+    {
+      "source": "/suporte",
+      "destination": "/support.html"
+    },
+    {
+      "source": "/suporte/",
+      "destination": "/support.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

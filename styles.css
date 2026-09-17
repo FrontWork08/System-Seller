@@ -173,3 +173,7 @@ html[data-theme] .confirm-steps b{background:var(--theme-active)}
 .auth-brand-mobile{display:none}
 @media(max-width:1100px){.auth-brand-mobile{display:flex}}
 @media(max-width:1100px) and (min-width:721px){.sidebar .brand-logo{content:url("./assets/system-seller-icon.png");width:44px;height:44px;padding:4px;object-fit:contain}}
+.auth-legal{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 16px;margin-top:20px;padding-top:16px;border-top:1px solid var(--line);font-size:12px}
+.auth-legal a{color:var(--muted);text-decoration:none}.auth-legal a:hover{color:var(--brand2)}
+.support-settings{margin-top:16px}.support-settings p{margin-top:0}.support-settings a{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+.consent-check{display:flex;align-items:flex-start;gap:10px;margin:4px 0 16px;color:var(--muted);font-size:12px;line-height:1.45}.consent-check input{width:16px!important;height:16px;margin:2px 0 0;flex:0 0 16px}.consent-check a{color:var(--brand2)}

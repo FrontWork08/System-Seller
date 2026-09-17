@@ -13,6 +13,17 @@ footer .brand-logo {
   width: 185px;
 }
 
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px 18px;
+}
+
+.footer-links a {
+  white-space: nowrap;
+}
+
 @media (max-width: 620px) {
   .site-header .brand-logo {
     content: url("/assets/system-seller-icon.png");
@@ -24,5 +35,9 @@ footer .brand-logo {
 
   footer .brand-logo {
     width: 180px;
+  }
+
+  .footer-links {
+    justify-content: flex-start;
   }
 }

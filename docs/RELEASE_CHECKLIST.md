@@ -29,6 +29,9 @@
 - [x] página pública de divulgação em /divulgar;
 - [x] painel principal marcado como noindex;
 - [x] sitemap e robots para a página pública;
+- [x] Política de Privacidade e Termos de Uso publicados;
+- [x] canal de suporte, segurança e solicitação de exclusão de conta;
+- [x] contato público: frontwork08@gmail.com;
 - [ ] enviar sitemap/URL ao Google Search Console quando desejar indexação mais rápida.
 
 ## Marketplaces
