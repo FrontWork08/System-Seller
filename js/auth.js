@@ -68,7 +68,7 @@
       return null;
     }
 
-    var res = await S.sb.from("profiles").select("id,full_name,avatar_path").eq("id", user.id).maybeSingle();
+    var res = await S.sb.from("profiles").select("id,full_name,avatar_path,theme").eq("id", user.id).maybeSingle();
     if (res.error) throw res.error;
 
     var profile = res.data;
@@ -79,7 +79,7 @@
       );
       if (ensured.error) throw ensured.error;
 
-      var fetched = await S.sb.from("profiles").select("id,full_name,avatar_path").eq("id", user.id).single();
+      var fetched = await S.sb.from("profiles").select("id,full_name,avatar_path,theme").eq("id", user.id).single();
       if (fetched.error) throw fetched.error;
       profile = fetched.data;
     }
@@ -90,6 +90,7 @@
       if (!signed.error && signed.data && signed.data.signedUrl) profile.avatar_url = signed.data.signedUrl;
     }
     S.state.profile = profile;
+    if (profile.theme) S.applyTheme(profile.theme, false);
     return profile;
   };
 
