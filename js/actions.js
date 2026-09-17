@@ -205,6 +205,46 @@
     return snapshot;
   };
 
+  S.validateWorkspaceBackup = function (snapshot) {
+    var sections = ["stores", "customers", "products", "orders", "order_items", "inventory_movements", "financial_transactions", "audit_logs", "team"];
+    if (!snapshot || snapshot.format !== "system-seller-workspace-backup" || snapshot.schema_version !== 1) {
+      throw new Error("Este arquivo não é um backup compatível do System Seller.");
+    }
+    if (!snapshot.organization || !snapshot.organization.id || !snapshot.organization.name) {
+      throw new Error("O backup não possui uma empresa válida.");
+    }
+    sections.forEach(function (key) {
+      if (!Array.isArray(snapshot[key])) throw new Error("Seção inválida no backup: " + key + ".");
+      if (snapshot[key].length > 100000) throw new Error("A seção " + key + " excede o limite permitido.");
+    });
+    return snapshot;
+  };
+
+  S.openBackupRestorePreview = function (snapshot) {
+    var source = snapshot.organization || {};
+    var differentOrg = source.id !== S.state.orgId;
+    var rows = [
+      ["Lojas", snapshot.stores.length],
+      ["Clientes", snapshot.customers.length],
+      ["Produtos", snapshot.products.length],
+      ["Pedidos", snapshot.orders.length],
+      ["Itens", snapshot.order_items.length],
+      ["Movimentações", snapshot.inventory_movements.length],
+      ["Financeiro", snapshot.financial_transactions.length],
+      ["Equipe", snapshot.team.length]
+    ].map(function (item) {
+      return '<div class="statline"><span>' + S.e(item[0]) + '</span><strong>' + item[1] + "</strong></div>";
+    }).join("");
+
+    var body = '<div class="note"><strong>Empresa do arquivo:</strong> ' + S.e(source.name) + '<br><strong>Gerado em:</strong> ' + S.e(snapshot.exported_at ? S.dt(snapshot.exported_at) : "Data não informada") + "</div>" +
+      (differentOrg ? '<div class="note backup-warning">Este backup pertence a outra empresa. Por segurança, ele só poderá ser restaurado aqui se a empresa atual estiver vazia e a empresa original não existir mais.</div>' : "") +
+      '<div class="section-title">Conteúdo que será restaurado</div><div class="restore-summary">' + rows + "</div>" +
+      '<div class="note backup-warning"><strong>Atenção:</strong> a restauração substituirá lojas, clientes, produtos, pedidos, estoque, financeiro e equipe da empresa atual. A operação é transacional: em caso de erro, nenhuma alteração será mantida. A auditoria original continua preservada no arquivo e não substitui a auditoria viva.</div>' +
+      '<form data-form="restore-backup"><div class="field"><label>Digite RESTAURAR para confirmar</label><input name="confirmation" autocomplete="off" required></div>' +
+      '<div class="actions right"><button class="danger-btn" type="submit">Restaurar este backup</button></div></form>';
+    S.modal("Confirmar restauração", body);
+  };
+
   var orderSearchTimer = null;
   function reloadOrdersFromFilters(immediate) {
     var search = document.getElementById("orderSearch");
@@ -303,7 +343,7 @@
         var resend = await S.sb.auth.resend({
           type: "signup",
           email: S.state.pendingEmail,
-          options: { emailRedirectTo: S.authRedirect() }
+          options: { emailRedirectTo: S.authRedirect("confirmed") }
         });
         b.disabled = false;
         if (resend.error) throw resend.error;
@@ -468,6 +508,10 @@
         } finally {
           b.disabled = false;
         }
+      } else if (a === "choose-backup") {
+        if (S.state.role !== "owner") throw new Error("Somente o proprietário pode restaurar backups.");
+        var backupInput = document.getElementById("backupFileInput");
+        if (backupInput) backupInput.click();
       } else if (a === "export") {
         await S.exportKind(b.dataset.kind);
         S.toast("Arquivo CSV gerado.");
@@ -517,6 +561,24 @@
         S.renderShell();
         await S.pageProfile();
         S.toast("Foto de perfil atualizada.");
+      } else if (t.id === "backupFileInput") {
+        var backupFile = t.files && t.files[0];
+        if (!backupFile) return;
+        if (!/\.json$/i.test(backupFile.name)) throw new Error("Selecione um arquivo JSON gerado pelo System Seller.");
+        if (backupFile.size > 10485760) throw new Error("O backup deve ter no máximo 10 MB para restauração pelo navegador.");
+        t.disabled = true;
+        var backupText = await backupFile.text();
+        var backupSnapshot;
+        try {
+          backupSnapshot = JSON.parse(backupText);
+        } catch (parseError) {
+          throw new Error("O arquivo selecionado não contém um JSON válido.");
+        } finally {
+          t.disabled = false;
+          t.value = "";
+        }
+        S.state.pendingBackup = S.validateWorkspaceBackup(backupSnapshot);
+        S.openBackupRestorePreview(S.state.pendingBackup);
       } else if (t.id === "orgSelect") {
         S.state.orgId = t.value;
         S.state.role = S.state.roles[S.state.orgId];
@@ -580,7 +642,7 @@
           email: String(f.email).trim(),
           password: String(f.password),
           options: {
-            emailRedirectTo: S.authRedirect(),
+            emailRedirectTo: S.authRedirect("confirmed"),
             data: { terms_version: "2026-09-17", terms_accepted_at: new Date().toISOString() }
           }
         });
@@ -599,8 +661,23 @@
         var recovery = await S.sb.auth.updateUser({ password: String(f.password) });
         if (recovery.error) throw recovery.error;
         S.state.recovery = false;
+        S.clearAuthMarker();
         S.toast("Senha atualizada.");
         await S.loadContext();
+      } else if (form.dataset.form === "restore-backup") {
+        if (S.state.role !== "owner") throw new Error("Somente o proprietário pode restaurar backups.");
+        if (String(f.confirmation || "").trim().toUpperCase() !== "RESTAURAR") throw new Error("Digite RESTAURAR para confirmar.");
+        var pendingBackup = S.validateWorkspaceBackup(S.state.pendingBackup);
+        var restored = await S.sb.rpc("restore_workspace_backup", {
+          p_organization_id: S.state.orgId,
+          p_backup: pendingBackup
+        });
+        if (restored.error) throw restored.error;
+        S.state.pendingBackup = null;
+        S.state.data = {};
+        S.closeModal();
+        await S.loadContext();
+        S.toast("Backup restaurado com sucesso.");
       } else if (form.dataset.form === "profile") {
         var fullName = String(f.full_name || "").trim();
         if (fullName.length < 2 || fullName.length > 80) throw new Error("O nome exibido deve ter entre 2 e 80 caracteres.");
