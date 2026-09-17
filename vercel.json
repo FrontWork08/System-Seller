@@ -32,6 +32,10 @@
   ],
   "rewrites": [
     {
+      "source": "/divulgar/google516ef7c886f3069e.html",
+      "destination": "/google516ef7c886f3069e.html"
+    },
+    {
       "source": "/divulgar",
       "destination": "/marketing.html"
     },
