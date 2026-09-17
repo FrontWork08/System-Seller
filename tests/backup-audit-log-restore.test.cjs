@@ -18,4 +18,6 @@ test('backup v2 preserva o histórico de auditoria durante a restauração', () 
     'a restauração deve reinserir os audit_logs exportados');
   assert.match(migrations, /jsonb_to_recordset\([^)]*p_backup->'audit_logs'/is,
     'a restauração deve ler audit_logs do backup');
+  assert.match(migrations, /grant execute on function private\.restore_audit_logs_backup_impl\(uuid,jsonb\) to authenticated;/i,
+    'o RPC público de restauração é SECURITY INVOKER e precisa poder executar o helper privado');
 });
