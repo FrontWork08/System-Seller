@@ -6,24 +6,44 @@
   <meta name="theme-color" content="#07111f">
   <meta name="referrer" content="no-referrer">
   <meta name="robots" content="noindex,nofollow">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self'; img-src 'self' data: https://tkdokwisgeqmflixvmff.supabase.co; connect-src 'self' https://tkdokwisgeqmflixvmff.supabase.co wss://tkdokwisgeqmflixvmff.supabase.co; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
-  <meta name="description" content="System Seller — gestão de pedidos, estoque, clientes e financeiro.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self'; img-src 'self' data: blob: https://tkdokwisgeqmflixvmff.supabase.co; connect-src 'self' https://tkdokwisgeqmflixvmff.supabase.co wss://tkdokwisgeqmflixvmff.supabase.co; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+  <meta name="description" content="System Seller — gestão de pedidos, produção, estoque, clientes e financeiro.">
   <title>System Seller</title>
+  <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" type="image/png" href="./assets/system-seller-icon.png">
   <link rel="apple-touch-icon" href="./assets/system-seller-icon.png">
   <link rel="stylesheet" href="./styles.css?v=20260917-0300">
+  <link rel="stylesheet" href="./modular.css?v=20260917-0752">
 </head>
 <body>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <main id="app"><div class="boot"><div class="spinner"></div><p>Carregando System Seller…</p></div></main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src="./config.js?v=20260916-2115"></script>
   <script src="./js/core.js?v=20260917-0300"></script>
   <script src="./js/time.js?v=20260916-2115"></script>
   <script src="./js/auth.js?v=20260917-0210"></script>
   <script src="./js/pages.js?v=20260917-0300"></script>
   <script src="./js/actions.js?v=20260917-0300"></script>
+  <script src="./js/customer-pricing.js?v=20260917-0752"></script>
+  <script src="./js/offline-sync.js?v=20260917-0752"></script>
+  <script src="./js/order-extensions.js?v=20260917-0752"></script>
   <script src="./js/payments.js?v=20260917-0010"></script>
-  <script src="./js/main.js?v=20260917-0220"></script>
+  <script src="./js/quotes.js?v=20260917-0752"></script>
+  <script src="./js/production.js?v=20260917-0752"></script>
+  <script src="./js/calendar.js?v=20260917-0752"></script>
+  <script src="./js/offline-cache.js?v=20260917-0815"></script>
+  <script src="./js/costs.js?v=20260917-0752"></script>
+  <script src="./js/reports.js?v=20260917-0752"></script>
+  <script src="./js/attachments.js?v=20260917-0752"></script>
+  <script src="./js/inventory-3d.js?v=20260917-0752"></script>
+  <script src="./js/notifications.js?v=20260917-0752"></script>
+  <script src="./js/sync-conflicts.js?v=20260917-0815"></script>
+  <script src="./js/documents.js?v=20260917-0752"></script>
+  <script src="./js/backup-modular.js?v=20260917-0752"></script>
+  <script src="./js/pwa.js?v=20260917-0752"></script>
+  <script src="./js/modular-shell.js?v=20260917-0752"></script>
+  <script src="./js/main.js?v=20260917-0815"></script>
 </body>
 </html>

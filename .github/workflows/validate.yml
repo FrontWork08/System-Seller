@@ -17,23 +17,64 @@ jobs:
       - name: JavaScript syntax
         run: |
           node --check config.js
+          node --check service-worker.js
           for f in js/*.js; do node --check "$f"; done
-      - name: Validate static references and JSON
+      - name: Validate modular references and JSON
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
           html=Path("index.html").read_text()
-          required=["styles.css","config.js","js/core.js","js/time.js","js/auth.js","js/pages.js","js/actions.js","js/payments.js","js/main.js"]
-          missing=[x for x in required if x not in html]
+          required=[
+            "styles.css","modular.css","manifest.webmanifest","config.js",
+            "js/core.js","js/time.js","js/auth.js","js/pages.js","js/actions.js",
+            "js/customer-pricing.js","js/offline-sync.js","js/order-extensions.js","js/payments.js",
+            "js/quotes.js","js/production.js","js/calendar.js","js/offline-cache.js",
+            "js/costs.js","js/reports.js","js/attachments.js","js/inventory-3d.js",
+            "js/notifications.js","js/sync-conflicts.js","js/documents.js","js/backup-modular.js",
+            "js/pwa.js","js/modular-shell.js","js/main.js"
+          ]
+          missing=[x for x in required if x not in html or not Path(x).exists()]
           if missing:
-              raise SystemExit("Missing references: "+", ".join(missing))
+              raise SystemExit("Missing references/files: "+", ".join(missing))
           json.loads(Path("vercel.json").read_text())
+          manifest=json.loads(Path("manifest.webmanifest").read_text())
+          if manifest.get("display") != "standalone":
+              raise SystemExit("PWA manifest must use standalone display")
+          sw=Path("service-worker.js").read_text()
+          for asset in ["offline-cache.js","sync-conflicts.js","backup-modular.js","manifest.webmanifest"]:
+              if asset not in sw:
+                  raise SystemExit("Service worker missing: "+asset)
           print("Static checks OK")
           PY
-      - name: Reject privileged credentials in frontend
+      - name: Validate modular behavior markers
         run: |
-          if grep -R -E "sb_secret_|SUPABASE_SERVICE_ROLE_KEY" config.js js index.html; then
-            echo "Privileged credential marker found in frontend"
+          python - <<'PY'
+          from pathlib import Path
+          checks={
+            "js/quotes.js":["convert_quote_to_order","create_quote"],
+            "js/production.js":["upsert_order_production","production_stage_history"],
+            "js/customer-pricing.js":["customer_product_prices"],
+            "js/costs.js":["record_order_cost","profitForOrder"],
+            "js/inventory-3d.js":["consume_filament","enable_3d"],
+            "js/offline-sync.js":["apply_offline_mutation","order_notes","production_update"],
+            "js/sync-conflicts.js":["resolve_sync_conflict"],
+            "js/backup-modular.js":["schema_version:2","restore_workspace_backup_v2"],
+            "js/notifications.js":["queue_business_email","process-business-email"],
+            "js/documents.js":["generated_documents","work_order"]
+          }
+          missing=[]
+          for file,needles in checks.items():
+              text=Path(file).read_text()
+              for needle in needles:
+                  if needle not in text: missing.append(f"{file}:{needle}")
+          if missing:
+              raise SystemExit("Missing modular behavior markers: "+", ".join(missing))
+          print("Behavior markers OK")
+          PY
+      - name: Reject privileged credential values in frontend
+        run: |
+          if grep -R -E "sb_secret_|SUPABASE_SERVICE_ROLE_KEY|xkeysib-[A-Za-z0-9_-]{16,}" config.js js index.html service-worker.js manifest.webmanifest; then
+            echo "Privileged credential value marker found in frontend"
             exit 1
           fi

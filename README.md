@@ -1,6 +1,6 @@
 # System Seller
 
-Sistema web multiempresa para gestão de pedidos, estoque, clientes, prazos e financeiro.
+Sistema web multiempresa para gestão de pedidos, orçamentos, produção, estoque, clientes, prazos e financeiro.
 
 - Aplicação: https://system-seller.vercel.app
 - Página pública: https://system-seller.vercel.app/divulgar
@@ -8,56 +8,73 @@ Sistema web multiempresa para gestão de pedidos, estoque, clientes, prazos e fi
 ## O que funciona
 
 - autenticação por e-mail e senha, confirmação de cadastro e recuperação de acesso;
-- SMTP próprio via Brevo;
 - isolamento entre empresas com Row Level Security;
-- empresas, lojas, clientes e produtos;
-- equipe com owner, admin, operator e viewer;
-- convites de equipe por link temporário, alteração de permissão e remoção;
+- empresas, lojas/canais, clientes, produtos e equipe com `owner`, `admin`, `operator` e `viewer`;
+- pedidos com vários itens, preço personalizado, frete, desconto, prazo, rastreio e pagamento parcial;
+- saldo em aberto, vencimento de cobrança, histórico de pagamentos e comprovantes privados;
+- preços especiais salvos por cliente/produto sem reescrever o histórico de vendas;
+- orçamentos com validade opcional, aprovação, histórico de status e conversão idempotente para pedido;
+- fluxo de produção com etapas configuráveis, responsável, planejamento, duração, notas e histórico;
+- calendário semanal com inícios, finais planejados e prazos de entrega;
+- custos por pedido/item e cálculo de lucro bruto sem sugerir ou alterar o preço de venda;
+- dashboard e relatórios com receita, recebíveis, custos, lucro, ticket médio, atrasos, estoque e produção;
+- exportação CSV protegida contra células executáveis no fluxo existente;
+- módulo opcional de impressão 3D por empresa;
+- estoque 3D com rolos, material, cor, peso, custo, consumo transacional e alerta de material baixo;
+- anexos privados em pedidos, orçamentos e pagamentos usando Supabase Storage com URLs assinadas;
+- central de notificações para atrasos, pagamentos pendentes, estoque baixo, material 3D e produção parada;
+- fila de e-mail comercial processada por Supabase Edge Function; credenciais do provedor ficam fora do navegador;
+- mensagens de cobrança copiáveis, preparadas para futura integração de canais sem integrar WhatsApp nesta versão;
+- documentos de orçamento, recibo/extrato e ordem de produção com snapshot imutável e impressão/salvamento em PDF;
+- PWA instalável com Service Worker;
+- cache operacional offline para pedidos, orçamentos, produção e prazos;
+- criação offline controlada de pedidos/orçamentos, notas e mudanças de etapa, com idempotência e resolução explícita de conflitos;
+- backup JSON v2 e backup portátil ZIP com anexos privados, mantendo compatibilidade com JSON v1;
 - estoque mínimo e ajustes com livro de movimentações;
-- pedidos com vários itens, frete, desconto, prazo e rastreio;
-- baixa de estoque transacional na criação do pedido;
-- cancelamento com estorno automático de estoque;
+- baixa de estoque transacional na criação do pedido e estorno no cancelamento;
 - pagamento e reembolso vinculados ao financeiro;
 - receitas e despesas manuais;
-- paginação e busca de pedidos no servidor;
 - auditoria de alterações críticas;
-- backup operacional JSON por empresa;
 - foto de perfil em bucket privado com URL assinada;
-- exclusão segura de produtos: remove do catálogo sem apagar pedidos e movimentações, com opção de restaurar;
-- hard delete de empresa, cliente e loja bloqueado no navegador;
-- estado de integração de marketplace não pode ser forjado pelo cliente web;
-- exportação CSV protegida contra células executáveis;
-- interface responsiva com quatro temas de aparência (azul, grafite, esmeralda e âmbar);
-- página pública com SEO, sitemap e robots separados do painel;
-- Política de Privacidade, Termos de Uso e central de suporte;
+- exclusão segura de produtos sem apagar o histórico;
+- interface responsiva com quatro temas de aparência;
+- página pública com SEO, sitemap, robots, Política de Privacidade, Termos de Uso e suporte;
 - canal público de contato e solicitação de exclusão: frontwork08@gmail.com;
-- Shopee e Mercado Livre disponíveis como canais, sem simular integração antes das APIs oficiais.
+- Shopee e Mercado Livre disponíveis apenas como canais cadastráveis, sem simular integração automática.
+
+## Arquitetura modular
+
+O núcleo existente continua responsável por autenticação, organizações, clientes/produtos, pedidos, estoque, pagamentos/financeiro, equipe, auditoria e restauração do formato antigo. A expansão adiciona módulos JavaScript independentes e tabelas/RPCs separados para orçamentos, produção, calendário, custos, anexos, 3D, notificações, documentos e sincronização offline.
+
+Operações críticas de múltiplos registros permanecem no banco por RPC transacional. Todos os dados duráveis pertencentes a uma empresa carregam `organization_id` e são protegidos por RLS.
 
 ## Segurança e integridade
 
-O frontend usa apenas a credencial pública própria para aplicações web. Credenciais privilegiadas ficam fora do navegador. A autorização é aplicada no banco por RLS e por funções transacionais.
+O frontend usa apenas credencial pública apropriada para aplicações web. Chaves privilegiadas e credenciais de e-mail ficam fora do navegador.
 
-Papéis disponíveis: owner, admin, operator e viewer. Financeiro, equipe administrativa, backup e auditoria ficam restritos conforme o papel.
+Arquivos comerciais são armazenados em bucket privado `business-files`, com caminho iniciado pelo ID da organização, políticas de Storage e acesso autenticado/assinado. O limite atual por arquivo é 15 MB.
 
-Ao criar um pedido, o backend valida organização e itens, bloqueia os produtos, valida saldo, grava pedido/itens, reduz estoque, registra movimentações e, quando aplicável, cria a receita. Se uma etapa falhar, a transação inteira é revertida.
+O modo offline não executa pagamentos, reembolsos, alterações de equipe, exclusões, consumo autoritativo de estoque ou restauração de backup. Essas operações exigem conexão.
 
-Convites de equipe são criados e resgatados por funções controladas no backend. O proprietário não pode ser removido ou rebaixado, e administradores não podem gerenciar outros administradores.
+## Validação
 
-## Validação realizada
+O GitHub Actions valida sintaxe de todos os JavaScript, referências dos módulos no HTML/PWA, presença dos fluxos críticos e ausência de marcadores de credenciais privilegiadas no frontend.
 
-O backend foi testado com transações de QA revertidas ao final, cobrindo criação de empresa, isolamento entre empresas, pedido, baixa de estoque, financeiro, cancelamento, estorno, auditoria, criação/leitura de convites de equipe e acesso do backup às tabelas protegidas.
-
-Os arquivos JavaScript e a configuração da Vercel passam por validação de sintaxe. O Supabase Security Advisor está sem alertas de schema/RLS; permanece um aviso de configuração do Auth para habilitar proteção contra senhas vazadas.
+O Supabase Security Advisor é executado após mudanças de schema/RLS. O aviso conhecido e independente desta expansão é a opção de proteção contra senhas vazadas do Auth.
 
 ## Backup
 
-A área **Gestão > Backup** gera um snapshot JSON portátil da empresa. Consulte `docs/BACKUP_POLICY.md`.
+A área **Gestão > Backup** oferece:
 
-Esse arquivo é complementar aos backups gerenciados do banco; retenção automática e Point-in-Time Recovery dependem da configuração/plano do provedor.
+- **JSON rápido v2**, com dados do núcleo e módulos;
+- **ZIP portátil**, contendo `backup.json` e os anexos privados disponíveis;
+- restauração compatível com JSON v1 e v2.
+
+Detalhes em `docs/BACKUP_POLICY.md`.
 
 ## E-mails
 
-Os modelos em português estão documentados em `docs/EMAIL_TEMPLATES.md`. O SMTP já usa Brevo. A configuração dos modelos hospedados é aplicada no painel/Management API do Supabase Auth.
+E-mails de autenticação continuam usando a configuração SMTP do Supabase/Brevo. E-mails comerciais da aplicação são enfileirados no banco e enviados pela Edge Function `process-business-email`, mantendo a chave do Brevo somente no ambiente server-side.
 
 ## Deploy e SEO
 
@@ -67,9 +84,13 @@ A Vercel publica a aplicação diretamente deste repositório. `vercel.json` adi
 - `/divulgar` é a página pública indexável;
 - `/sitemap.xml` aponta para a página pública.
 
-## Marketplaces
+## Fora do escopo desta versão
 
-Shopee e Mercado Livre permanecem com integração automática não conectada até que OAuth, credenciais e homologação das APIs oficiais sejam configurados. Nenhum pedido fictício ou sincronização simulada é usada.
+- integração automática com Shopee;
+- integração automática com Mercado Livre;
+- envio via WhatsApp;
+- cálculo/sugestão automática de preço de venda para impressão 3D;
+- gravações financeiras ou de estoque crítico offline.
 
 ## Checklist de liberação
 

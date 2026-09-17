@@ -1,0 +1,14 @@
+{
+  "name": "System Seller",
+  "short_name": "System Seller",
+  "description": "Gestão de pedidos, clientes, produção, estoque e financeiro.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#07111f",
+  "theme_color": "#07111f",
+  "icons": [
+    {"src":"/assets/system-seller-icon.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
+    {"src":"/assets/system-seller-icon.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
+  ]
+}
