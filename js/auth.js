@@ -26,18 +26,18 @@
     var sub = mode === "login" ? "Pedidos, estoque e financeiro em um só lugar." : mode === "signup" ? "Sua empresa fica isolada das demais por permissões no banco." : "Enviaremos um link seguro para redefinir a senha.";
     var tabs = mode === "forgot" ? "" : '<div class="tabs"><button class="tab ' + (mode === "login" ? "active" : "") + '" data-action="auth-mode" data-mode="login">Entrar</button><button class="tab ' + (mode === "signup" ? "active" : "") + '" data-action="auth-mode" data-mode="signup">Criar conta</button></div>';
 
-    S.app.innerHTML = '<div class="auth-wrap"><section class="auth-hero"><div class="brand"><div class="brand-mark">SS</div><span>System Seller</span></div>' +
+    S.app.innerHTML = '<div class="auth-wrap"><section class="auth-hero"><div class="brand"><img class="brand-logo" src="./assets/system-seller-logo.png" alt="System Seller"></div>' +
       '<div class="auth-copy"><h1>Controle a operação sem perder o controle do dinheiro.</h1><p>Gestão real de pedidos, estoque, clientes, prazos e caixa. Sem dados demonstrativos: tudo é gravado no banco da sua empresa.</p></div>' +
       '<div class="feature-row"><div class="feature"><strong>Estoque transacional</strong><span>Baixa e estorno ligados ao pedido.</span></div><div class="feature"><strong>Multiempresa</strong><span>Cada cliente acessa somente seus dados.</span></div><div class="feature"><strong>Auditoria</strong><span>Alterações importantes ficam registradas.</span></div></div></section>' +
-      '<section class="auth-card-wrap"><div class="auth-card"><h2>' + title + '</h2><p class="sub">' + sub + "</p>" + tabs + form + "</div></section></div>";
+      '<section class="auth-card-wrap"><div class="auth-card"><div class="brand auth-brand-mobile"><img class="brand-logo" src="./assets/system-seller-logo.png" alt="System Seller"></div><h2>' + title + '</h2><p class="sub">' + sub + "</p>" + tabs + form + "</div></section></div>";
   };
 
   S.renderEmailConfirmation = function (email) {
     S.state.pendingEmail = String(email || "").trim();
-    S.app.innerHTML = '<div class="auth-wrap"><section class="auth-hero"><div class="brand"><div class="brand-mark">SS</div><span>System Seller</span></div>' +
+    S.app.innerHTML = '<div class="auth-wrap"><section class="auth-hero"><div class="brand"><img class="brand-logo" src="./assets/system-seller-logo.png" alt="System Seller"></div>' +
       '<div class="auth-copy"><h1>Sua operação começa com uma conta segura.</h1><p>Antes de liberar o acesso aos dados da empresa, confirmamos que o e-mail realmente pertence a você.</p></div>' +
       '<div class="feature-row"><div class="feature"><strong>Confirmação obrigatória</strong><span>Evita cadastros com e-mails indevidos.</span></div><div class="feature"><strong>Acesso protegido</strong><span>Seu ambiente só é criado após a validação.</span></div><div class="feature"><strong>Dados isolados</strong><span>Cada empresa acessa somente seus próprios registros.</span></div></div></section>' +
-      '<section class="auth-card-wrap"><div class="auth-card confirm-card"><div class="confirm-icon" aria-hidden="true">✉</div><div class="confirm-kicker">Conta criada</div><h2>Confirme seu e-mail</h2>' +
+      '<section class="auth-card-wrap"><div class="auth-card confirm-card"><div class="brand auth-brand-mobile"><img class="brand-logo" src="./assets/system-seller-logo.png" alt="System Seller"></div><div class="confirm-icon" aria-hidden="true">✉</div><div class="confirm-kicker">Conta criada</div><h2>Confirme seu e-mail</h2>' +
       '<p class="sub">Enviamos um link de confirmação para:</p><div class="confirm-email">' + S.e(S.state.pendingEmail) + '</div>' +
       '<div class="confirm-steps"><div><b>1</b><span>Abra sua caixa de entrada.</span></div><div><b>2</b><span>Toque em <strong>Confirmar e-mail</strong>.</span></div><div><b>3</b><span>Você voltará ao System Seller com o acesso liberado.</span></div></div>' +
       '<div class="note">Não encontrou? Verifique também Spam, Lixo eletrônico e Promoções. O link pode levar alguns instantes para chegar.</div>' +
@@ -47,7 +47,7 @@
   };
 
   S.renderRecovery = function () {
-    S.app.innerHTML = '<section class="panel recovery"><div class="panel-body"><div class="brand"><div class="brand-mark">SS</div><span>System Seller</span></div>' +
+    S.app.innerHTML = '<section class="panel recovery"><div class="panel-body"><div class="brand"><img class="brand-logo" src="./assets/system-seller-logo.png" alt="System Seller"></div>' +
       '<h2>Defina uma nova senha</h2><p class="muted">O link de recuperação foi validado. Escolha uma nova senha forte.</p>' +
       '<form data-form="recovery"><div class="field"><label>Nova senha</label><input name="password" type="password" minlength="10" autocomplete="new-password" required></div>' +
       '<div class="field"><label>Confirmar senha</label><input name="confirm" type="password" minlength="10" autocomplete="new-password" required></div>' +
@@ -55,7 +55,7 @@
   };
 
   S.renderOnboarding = function () {
-    S.app.innerHTML = '<div class="auth-card-wrap"><section class="auth-card"><div class="brand"><div class="brand-mark">SS</div><span>System Seller</span></div>' +
+    S.app.innerHTML = '<div class="auth-card-wrap"><section class="auth-card"><div class="brand"><img class="brand-logo" src="./assets/system-seller-logo.png" alt="System Seller"></div>' +
       '<h2>Cadastre sua empresa</h2><p class="sub">Isso cria o espaço isolado onde pedidos, estoque, clientes e financeiro serão guardados.</p>' +
       '<form data-form="onboarding"><div class="field"><label>Nome da empresa</label><input name="name" maxlength="120" required placeholder="Ex.: Minha Loja"></div>' +
       '<button class="primary full" type="submit">Criar ambiente da empresa</button></form></section></div>';

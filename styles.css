@@ -164,3 +164,12 @@ html[data-theme] .confirm-steps b{background:var(--theme-active)}
 .theme-preview-amber{background:#241a10}.theme-preview-amber i{background:#f2b85b}
 .theme-note{margin-top:12px;color:var(--muted);font-size:13px}
 @media(max-width:700px){.theme-grid{grid-template-columns:1fr}.theme-card{grid-template-columns:62px minmax(0,1fr) 24px}}
+
+/* Identidade visual oficial */
+.brand-logo{display:block;width:200px;max-width:100%;height:auto;padding:5px 8px;border-radius:12px;background:#f7fbff;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.auth-hero .brand-logo{width:230px}
+.auth-card .brand,.recovery .brand{margin-bottom:20px}
+.auth-card .brand-logo,.recovery .brand-logo{width:190px}
+.auth-brand-mobile{display:none}
+@media(max-width:1100px){.auth-brand-mobile{display:flex}}
+@media(max-width:1100px) and (min-width:721px){.sidebar .brand-logo{content:url("./assets/system-seller-icon.png");width:44px;height:44px;padding:4px;object-fit:contain}}

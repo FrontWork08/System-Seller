@@ -280,7 +280,7 @@
     var displayName = S.profileName();
 
     S.app.innerHTML = '<div class="shell"><aside class="sidebar">' +
-      '<div class="brand"><div class="brand-mark">SS</div><span>System Seller</span></div>' +
+      '<div class="brand"><img class="brand-logo" src="./assets/system-seller-logo.png" alt="System Seller"></div>' +
       '<nav class="nav">' + navHtml + '</nav>' +
       '<div class="sidebar-foot"><button class="userbox" data-action="nav" data-page="profile">' + S.avatarMarkup("avatar-mini-img") + '<span class="userbox-copy"><strong>' + S.e(displayName) + '</strong><small>' + S.e(roleLabel) + '</small></span></button>' +
       '<button class="logout-btn" data-action="logout">↪ <span>Sair da conta</span></button></div></aside>' +

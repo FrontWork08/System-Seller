@@ -1,0 +1,28 @@
+.brand-logo {
+  display: block;
+  width: 205px;
+  max-width: 100%;
+  height: auto;
+  padding: 4px 7px;
+  border-radius: 11px;
+  background: #f7fbff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+footer .brand-logo {
+  width: 185px;
+}
+
+@media (max-width: 620px) {
+  .site-header .brand-logo {
+    content: url("/assets/system-seller-icon.png");
+    width: 46px;
+    height: 46px;
+    padding: 4px;
+    object-fit: contain;
+  }
+
+  footer .brand-logo {
+    width: 180px;
+  }
+}
