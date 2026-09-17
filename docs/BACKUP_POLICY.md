@@ -1,6 +1,6 @@
 # Política de backup — System Seller
 
-O sistema possui um **backup operacional JSON** na área **Gestão > Backup**. Ele exporta os dados da empresa logada sem incluir chaves, senhas ou tokens de convite.
+O sistema possui um **backup operacional JSON restaurável** na área **Gestão > Backup**. Ele exporta os dados da empresa logada sem incluir chaves, senhas ou tokens de convite.
 
 ## Conteúdo do snapshot
 
@@ -22,6 +22,16 @@ O sistema possui um **backup operacional JSON** na área **Gestão > Backup**. E
 - **Mensal:** abrir um snapshot e conferir se pedidos, produtos e financeiro estão presentes.
 
 Sugestão de retenção para o backup operacional: manter as últimas 8 cópias semanais e 12 cópias mensais, ajustando conforme o volume e as obrigações do negócio.
+
+## Restauração
+
+- somente o proprietário da empresa pode restaurar;
+- o arquivo é validado e uma prévia é exibida antes da confirmação;
+- lojas, clientes, produtos, pedidos, estoque, financeiro e equipe são substituídos pelo conteúdo do backup;
+- a operação acontece em uma única transação: qualquer erro desfaz todas as alterações;
+- membros da equipe só são recuperados quando suas contas ainda existem;
+- o histórico de auditoria exportado permanece no arquivo para conferência, mas não é injetado na auditoria viva;
+- um backup de uma empresa excluída pode ser restaurado em uma empresa nova e vazia.
 
 ## Backup gerenciado do banco
 
