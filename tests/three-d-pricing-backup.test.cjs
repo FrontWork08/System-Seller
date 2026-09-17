@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 
 test('restauração v2 preserva configuração e snapshot da precificação 3D', () => {
-  const sql = fs.readFileSync('supabase/migrations/20260917114530_automatic_3d_pricing_backup_restore.sql', 'utf8');
+  const sql = fs.readFileSync('supabase/migrations/20260917114429_automatic_3d_pricing_backup_restore.sql', 'utf8');
   for (const marker of [
     'electricity_price_per_kwh',
     'printer_power_watts',
