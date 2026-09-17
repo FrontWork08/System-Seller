@@ -303,11 +303,15 @@
     ]);
     counts.forEach(function (x) { if (x.error) throw x.error; });
 
+    var restoreButton = S.state.role === "owner" ? '<button class="secondary" data-action="choose-backup">Importar e restaurar</button><input id="backupFileInput" type="file" accept="application/json,.json" hidden>' : "";
+
     document.getElementById("page").innerHTML =
-      '<div class="page-head"><div><h2>Backup e recuperação</h2><p>Gere uma cópia portátil dos dados da empresa para arquivamento e conferência.</p></div><div class="actions"><button class="primary" data-action="backup-workspace">Baixar backup JSON</button></div></div>' +
+      '<div class="page-head"><div><h2>Backup e recuperação</h2><p>Exporte uma cópia portátil e restaure os dados quando necessário.</p></div><div class="actions">' + restoreButton + '<button class="primary" data-action="backup-workspace">Baixar backup JSON</button></div></div>' +
       '<div class="cards"><div class="card"><div class="k">Pedidos</div><div class="v">' + (counts[0].count || 0) + '</div></div><div class="card"><div class="k">Produtos</div><div class="v">' + (counts[1].count || 0) + '</div></div><div class="card"><div class="k">Clientes</div><div class="v">' + (counts[2].count || 0) + '</div></div><div class="card"><div class="k">Último backup neste navegador</div><div class="v backup-date">' + (last ? S.dt(last) : "Nunca") + '</div></div></div>' +
       '<section class="panel"><div class="panel-body"><h3>O que entra no arquivo</h3><p class="muted">Empresa, lojas, clientes, produtos, pedidos, itens, movimentações de estoque, financeiro, equipe e auditoria. Tokens de convite e credenciais não são exportados.</p>' +
-      '<div class="note">Este arquivo é um backup operacional complementar. Ele não substitui os backups gerenciados e a retenção do banco no provedor. Guarde o JSON em local seguro porque ele contém dados comerciais da empresa.</div></div></section>' +
+      '<div class="note">Este arquivo é um backup operacional restaurável. Ele não substitui os backups gerenciados e a retenção do banco no provedor. Guarde o JSON em local seguro porque ele contém dados comerciais da empresa.</div></div></section>' +
+      '<section class="panel backup-restore"><div class="panel-body"><h3>Restaurar um backup</h3><p class="muted">Somente o proprietário pode importar um JSON do System Seller. Antes de alterar qualquer dado, o sistema mostra uma prévia e exige confirmação. A restauração substitui a operação atual em uma única transação.</p>' +
+      (S.state.role === "owner" ? '<button class="secondary" data-action="choose-backup">Selecionar arquivo de backup</button>' : '<div class="note">Peça ao proprietário da empresa para realizar uma restauração.</div>') + '</div></section>' +
       '<section class="panel backup-checklist"><div class="panel-head"><h3>Rotina recomendada</h3></div><div class="panel-body"><div class="list"><div class="list-item"><div><strong>Semanal</strong><div class="meta">Baixe um snapshot e armazene fora do computador principal.</div></div></div><div class="list-item"><div><strong>Antes de mudanças grandes</strong><div class="meta">Exporte antes de importações, integrações ou alterações em massa.</div></div></div><div class="list-item"><div><strong>Mensal</strong><div class="meta">Teste se o arquivo abre e contém pedidos, produtos e financeiro esperados.</div></div></div></div></div></section>';
   };
 
