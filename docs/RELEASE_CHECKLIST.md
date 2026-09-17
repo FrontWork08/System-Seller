@@ -21,7 +21,7 @@
 - [x] perfil e foto privada;
 - [x] equipe com convites e permissões;
 - [x] paginação e busca de pedidos no servidor;
-- [x] backup operacional JSON.
+- [x] backup operacional JSON com importação e restauração transacional.
 
 ## Publicação
 
