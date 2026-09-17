@@ -1,5 +1,5 @@
 "use strict";
-var CACHE = "system-seller-v20260917-5";
+var CACHE = "system-seller-v20260917-6";
 var SHELL = [
   "/", "/index.html", "/styles.css", "/modular.css", "/config.js",
   "/js/core.js", "/js/time.js", "/js/auth.js", "/js/pages.js", "/js/actions.js",
@@ -59,13 +59,25 @@ self.addEventListener("fetch", function (event) {
     return;
   }
 
+  var isNavigation = req.mode === "navigate" || req.destination === "document";
+
   event.respondWith(fetch(req).then(function (res) {
     if (res && res.ok && ["document", "script", "style", "image", "manifest"].indexOf(req.destination) !== -1) {
       var copy = res.clone();
-      caches.open(CACHE).then(function (cache) { cache.put(req, copy); });
+      var canonical = new Request(url.origin + url.pathname, {
+        method: "GET",
+        headers: req.headers,
+        mode: "same-origin",
+        credentials: "same-origin"
+      });
+      caches.open(CACHE).then(function (cache) { cache.put(canonical, copy); });
     }
     return res;
   }).catch(function () {
-    return caches.match(req).then(function (cached) { return cached || caches.match("/index.html"); });
+    return caches.match(req, { ignoreSearch: true }).then(function (cached) {
+      if (cached) return cached;
+      if (isNavigation) return caches.match("/index.html");
+      return Response.error();
+    });
   }));
 });
