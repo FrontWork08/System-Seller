@@ -28,7 +28,8 @@ Fix:
 - added `private.restore_audit_logs_backup_impl`;
 - restore now replaces the organization's exported audit history at the end of the restore transaction;
 - restore writes a new `workspace_backup / restore_completed` audit entry after the historical rows are restored;
-- migration: `20260917175529_audit_restore_and_offline_tenant_isolation.sql`.
+- migration: `20260917175529_audit_restore_and_offline_tenant_isolation.sql`;
+- final review also verified the public restore RPC can execute the private helper under `SECURITY INVOKER`; corrective grant migration: `20260917190947_grant_authenticated_audit_restore_helper.sql`.
 
 Regression test: `tests/backup-audit-log-restore.test.cjs`.
 
@@ -238,9 +239,9 @@ No privileged storage credential was introduced into browser code.
 
 ### Wave 11 — Backup and restoration
 
-Reviewed JSON v2 restore composition, payment metadata, quote status history, 3D pricing state, audit history, ownership checks, and migration ordering.
+Reviewed JSON v2 restore composition, payment metadata, quote status history, 3D pricing state, audit history, ownership checks, helper execution permissions, and migration ordering.
 
-Audit-history data-loss defect corrected. Restore stays owner-only and versioned.
+Audit-history data-loss defect corrected. Restore stays owner-only and versioned, and the authenticated public wrapper can execute the private audit helper.
 
 ### Wave 12 — Offline queue, synchronization, conflicts
 
@@ -293,8 +294,9 @@ Performance Advisor reported unused indexes. In a young/low-volume project this 
 
 - `20260917175529_audit_restore_and_offline_tenant_isolation.sql`
 - `20260917181253_revoke_anon_app_rpc_execution.sql`
+- `20260917190947_grant_authenticated_audit_restore_helper.sql`
 
-Both migrations were applied to the connected Supabase project and committed to the audit branch.
+All three migrations were applied to the connected Supabase project and committed to the audit branch.
 
 ## Regression tests introduced/updated
 
