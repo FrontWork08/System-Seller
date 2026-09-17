@@ -149,7 +149,9 @@
       rows.map(function (x) {
         return '<tr><td>' + S.e(x.sku) + "</td><td><strong>" + S.e(x.name) + "</strong></td><td>" + S.money(x.cost) + "</td><td>" + S.money(x.price) + '</td><td class="' +
           (x.stock <= x.min_stock ? "low" : "") + '">' + x.stock + "</td><td>" + x.min_stock + "</td><td>" + (x.active ? S.badge("Ativo", "ok") : S.badge("Inativo")) +
-          '</td><td class="nowrap">' + (S.canWrite() ? '<button class="ghost mini" data-action="stock-product" data-id="' + x.id + '">Estoque</button> <button class="ghost mini" data-action="edit-product" data-id="' + x.id + '">Editar</button>' : "") + "</td></tr>";
+          '</td><td class="nowrap">' + (S.canWrite() ? '<button class="ghost mini" data-action="stock-product" data-id="' + x.id + '">Estoque</button> <button class="ghost mini" data-action="edit-product" data-id="' + x.id + '">Editar</button>' : "") +
+          (S.canAdmin() && x.active ? ' <button class="danger-btn mini" data-action="delete-product" data-id="' + x.id + '">Excluir</button>' : "") +
+          (S.canAdmin() && !x.active ? ' <button class="secondary mini" data-action="restore-product" data-id="' + x.id + '">Restaurar</button>' : "") + "</td></tr>";
       }).join("") + "</tbody></table></div>";
   };
 
@@ -159,8 +161,8 @@
     document.getElementById("page").innerHTML =
       '<div class="page-head"><div><h2>Produtos e estoque</h2><p>Custos, preços, saldo e estoque mínimo.</p></div><div class="actions"><button class="ghost" data-action="export" data-kind="products">Exportar CSV</button>' +
       (S.canWrite() ? '<button class="primary" data-action="new-product">+ Produto</button>' : "") + '</div></div>' +
-      '<div class="toolbar"><input class="search" id="productSearch" placeholder="Buscar por SKU ou nome"><select id="stockFilter"><option value="">Todos</option><option value="low">Estoque baixo</option><option value="active">Ativos</option><option value="inactive">Inativos</option></select></div>' +
-      '<section class="panel" id="productsPanel">' + S.productsTable(rows) + "</section>";
+      '<div class="toolbar"><input class="search" id="productSearch" placeholder="Buscar por SKU ou nome"><select id="stockFilter"><option value="active" selected>Ativos</option><option value="low">Estoque baixo</option><option value="inactive">Inativos/excluídos</option><option value="">Todos</option></select></div>' +
+      '<section class="panel" id="productsPanel">' + S.productsTable(rows.filter(function (x) { return x.active; })) + "</section>";
   };
 
   S.customersTable = function (rows) {

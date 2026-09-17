@@ -23,7 +23,8 @@ Sistema web multiempresa para gestão de pedidos, estoque, clientes, prazos e fi
 - auditoria de alterações críticas;
 - backup operacional JSON por empresa;
 - foto de perfil em bucket privado com URL assinada;
-- hard delete de empresa, produto, cliente e loja bloqueado no navegador;
+- exclusão segura de produtos: remove do catálogo sem apagar pedidos e movimentações, com opção de restaurar;
+- hard delete de empresa, cliente e loja bloqueado no navegador;
 - estado de integração de marketplace não pode ser forjado pelo cliente web;
 - exportação CSV protegida contra células executáveis;
 - interface responsiva com quatro temas de aparência (azul, grafite, esmeralda e âmbar);

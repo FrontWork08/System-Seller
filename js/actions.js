@@ -230,7 +230,7 @@
     var f = filter ? filter.value : "";
     var rows = (S.state.data.products || []).filter(function (x) {
       var matchText = !q || (x.sku + " " + x.name).toLowerCase().includes(q);
-      var matchFilter = !f || (f === "low" && x.stock <= x.min_stock) || (f === "active" && x.active) || (f === "inactive" && !x.active);
+      var matchFilter = !f || (f === "low" && x.active && x.stock <= x.min_stock) || (f === "active" && x.active) || (f === "inactive" && !x.active);
       return matchText && matchFilter;
     });
     panel.innerHTML = S.productsTable(rows);
@@ -368,6 +368,19 @@
         var stockProduct = (S.state.data.products || []).find(function (x) { return x.id === b.dataset.id; });
         if (!stockProduct) throw new Error("Produto não encontrado.");
         S.openStockForm(stockProduct);
+      } else if (a === "delete-product") {
+        var deleteProduct = (S.state.data.products || []).find(function (x) { return x.id === b.dataset.id; });
+        if (!deleteProduct) throw new Error("Produto não encontrado.");
+        if (!confirm('Excluir "' + deleteProduct.name + '" do catálogo?\n\nEle não aparecerá em novas vendas, mas continuará preservado nos pedidos e no histórico de estoque.')) return;
+        var deleteProductRes = await S.sb.from("products").update({ active: false }).eq("id", deleteProduct.id).eq("organization_id", S.state.orgId);
+        if (deleteProductRes.error) throw deleteProductRes.error;
+        S.toast("Produto excluído do catálogo.");
+        await S.pageProducts();
+      } else if (a === "restore-product") {
+        var restoreProductRes = await S.sb.from("products").update({ active: true }).eq("id", b.dataset.id).eq("organization_id", S.state.orgId);
+        if (restoreProductRes.error) throw restoreProductRes.error;
+        S.toast("Produto restaurado.");
+        await S.pageProducts();
       } else if (a === "new-customer") S.openCustomerForm();
       else if (a === "edit-customer") {
         var customer = (S.state.data.customers || []).find(function (x) { return x.id === b.dataset.id; });
