@@ -25,6 +25,11 @@
           S.state.recovery = true;
           setTimeout(S.renderRecovery, 0);
         } else if (event === "SIGNED_IN" && session) {
+          if (S.state.authMarker === "recovery") {
+            S.state.recovery = true;
+            setTimeout(S.renderRecovery, 0);
+            return;
+          }
           setTimeout(function () {
             S.loadContext().then(announceAuthResult).catch(function (err) { S.toast(S.errText(err), "error"); });
           }, 0);
@@ -37,6 +42,11 @@
       if (res.error) throw res.error;
       S.state.session = res.data.session;
       if (S.state.session) {
+        if (S.state.authMarker === "recovery") {
+          S.state.recovery = true;
+          S.renderRecovery();
+          return;
+        }
         await S.loadContext();
         announceAuthResult();
       } else {
