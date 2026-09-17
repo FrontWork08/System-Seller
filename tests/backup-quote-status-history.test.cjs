@@ -6,9 +6,10 @@ test('backup v2 exporta e restaura quote_status_history sem quebrar backups v2 a
   const backup = fs.readFileSync('js/backup-modular.js', 'utf8');
   assert.match(backup, /quote_status_history/);
   assert.match(backup, /snapshot\.quote_status_history/);
+  assert.equal(backup.includes("t==='quote_status_history'?'changed_at':'created_at'"), true, 'histórico deve ser exportado ordenando por changed_at');
 
-  const migrationPath = 'supabase/migrations/20260917123000_quote_status_history_backup_restore.sql';
-  assert.equal(fs.existsSync(migrationPath), true, 'migração de restauração do histórico deve existir');
+  const migrationPath = 'supabase/migrations/20260917125950_quote_status_history_backup_restore.sql';
+  assert.equal(fs.existsSync(migrationPath), true, 'migração de restauração do histórico deve existir com a mesma versão aplicada no Supabase');
   const migration = fs.readFileSync(migrationPath, 'utf8');
   for (const marker of [
     "p_backup ? 'quote_status_history'",
