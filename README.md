@@ -16,11 +16,15 @@ Sistema web multiempresa para gestão de pedidos, orçamentos, produção, estoq
 - orçamentos com validade opcional, aprovação, histórico de status e conversão idempotente para pedido;
 - fluxo de produção com etapas configuráveis, responsável, planejamento, duração, notas e histórico;
 - calendário semanal com inícios, finais planejados e prazos de entrega;
-- custos por pedido/item e cálculo de lucro bruto sem sugerir ou alterar o preço de venda;
+- custos por pedido/item e cálculo de lucro bruto sem alterar automaticamente preços já registrados;
 - dashboard e relatórios com receita, recebíveis, custos, lucro, ticket médio, atrasos, estoque e produção;
 - exportação CSV protegida contra células executáveis no fluxo existente;
 - módulo opcional de impressão 3D por empresa;
 - estoque 3D com rolos, material, cor, peso, custo, consumo transacional e alerta de material baixo;
+- precificação automática de trabalhos 3D com custo de material, energia, máquina e mão de obra/acabamento;
+- margem 3D configurável por empresa, preço sugerido por margem real e preço final sempre editável;
+- aplicação do preço calculado diretamente em novos itens de pedido e orçamento, sem reescrever histórico antigo;
+- snapshot da composição do preço 3D salvo no trabalho para auditoria e restauração de backup;
 - anexos privados em pedidos, orçamentos e pagamentos usando Supabase Storage com URLs assinadas;
 - central de notificações para atrasos, pagamentos pendentes, estoque baixo, material 3D e produção parada;
 - fila de e-mail comercial processada por Supabase Edge Function; credenciais do provedor ficam fora do navegador;
@@ -58,7 +62,7 @@ O modo offline não executa pagamentos, reembolsos, alterações de equipe, excl
 
 ## Validação
 
-O GitHub Actions valida sintaxe de todos os JavaScript, referências dos módulos no HTML/PWA, presença dos fluxos críticos e ausência de marcadores de credenciais privilegiadas no frontend.
+O GitHub Actions executa testes unitários da precificação 3D, valida sintaxe de todos os JavaScript, referências dos módulos no HTML/PWA, presença dos fluxos críticos e ausência de marcadores de credenciais privilegiadas no frontend.
 
 O Supabase Security Advisor é executado após mudanças de schema/RLS. O aviso conhecido e independente desta expansão é a opção de proteção contra senhas vazadas do Auth.
 
@@ -68,7 +72,8 @@ A área **Gestão > Backup** oferece:
 
 - **JSON rápido v2**, com dados do núcleo e módulos;
 - **ZIP portátil**, contendo `backup.json` e os anexos privados disponíveis;
-- restauração compatível com JSON v1 e v2.
+- restauração compatível com JSON v1 e v2;
+- preservação dos parâmetros e snapshots de precificação 3D na restauração v2.
 
 Detalhes em `docs/BACKUP_POLICY.md`.
 
@@ -89,7 +94,6 @@ A Vercel publica a aplicação diretamente deste repositório. `vercel.json` adi
 - integração automática com Shopee;
 - integração automática com Mercado Livre;
 - envio via WhatsApp;
-- cálculo/sugestão automática de preço de venda para impressão 3D;
 - gravações financeiras ou de estoque crítico offline.
 
 ## Checklist de liberação

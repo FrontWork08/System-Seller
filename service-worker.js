@@ -1,12 +1,12 @@
 "use strict";
-var CACHE = "system-seller-v20260917-4";
+var CACHE = "system-seller-v20260917-5";
 var SHELL = [
   "/", "/index.html", "/styles.css", "/modular.css", "/config.js",
   "/js/core.js", "/js/time.js", "/js/auth.js", "/js/pages.js", "/js/actions.js",
   "/js/customer-pricing.js", "/js/offline-sync.js", "/js/order-extensions.js", "/js/payments.js",
   "/js/modular-shell.js", "/js/quotes.js", "/js/production.js", "/js/calendar.js", "/js/offline-cache.js",
-  "/js/costs.js", "/js/reports.js", "/js/attachments.js", "/js/inventory-3d.js", "/js/notifications.js", "/js/sync-conflicts.js",
-  "/js/documents.js", "/js/backup-modular.js", "/js/pwa.js", "/js/main.js",
+  "/js/costs.js", "/js/reports.js", "/js/attachments.js", "/js/three-d-pricing.js", "/js/inventory-3d.js", "/js/notifications.js", "/js/sync-conflicts.js",
+  "/js/documents.js", "/js/backup-modular.js", "/js/pwa.js", "/js/three-d-pricing-ui.js", "/js/main.js",
   "/assets/system-seller-icon.png", "/assets/system-seller-logo.png", "/manifest.webmanifest"
 ];
 var EXTERNAL_RUNTIME = [
