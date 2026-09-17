@@ -456,6 +456,8 @@
 
       '<section class="panel profile-settings"><div class="panel-head"><h3>Dados do perfil</h3><span class="muted">Visível apenas dentro da sua conta</span></div><div class="panel-body"><form data-form="profile"><div class="form-grid"><div class="field span2"><label>Nome exibido</label><input name="full_name" minlength="2" maxlength="80" value="' + S.e(profile.full_name || "") + '" placeholder="Ex.: João Silva" required></div></div><div class="actions"><button class="primary" type="submit">Salvar perfil</button></div></form></div></section>' +
 
+      '<section class="panel theme-settings"><div class="panel-head"><h3>Aparência</h3><span class="muted">Escolha uma paleta mais confortável para trabalhar</span></div><div class="panel-body"><div class="theme-grid">' + S.themeCards() + '</div><div class="theme-note">O tema fica salvo na sua conta e também neste navegador.</div></div></section>' +
+
       '<div class="section-title">Operação</div><div class="stats-grid">' +
       '<div class="metric"><span>Pedidos totais</span><strong>' + orders.length + '</strong><small>' + openOrders.length + ' em andamento</small></div>' +
       '<div class="metric"><span>Entregues</span><strong>' + delivered + '</strong><small>' + cancelled + ' cancelados</small></div>' +
