@@ -26,7 +26,7 @@ Sistema web multiempresa para gestão de pedidos, estoque, clientes, prazos e fi
 - hard delete de empresa, produto, cliente e loja bloqueado no navegador;
 - estado de integração de marketplace não pode ser forjado pelo cliente web;
 - exportação CSV protegida contra células executáveis;
-- interface responsiva;
+- interface responsiva com quatro temas de aparência (azul, grafite, esmeralda e âmbar);
 - página pública com SEO, sitemap e robots separados do painel;
 - Shopee e Mercado Livre disponíveis como canais, sem simular integração antes das APIs oficiais.
 
@@ -42,7 +42,7 @@ Convites de equipe são criados e resgatados por funções controladas no backen
 
 ## Validação realizada
 
-O backend foi testado com transações de QA revertidas ao final, cobrindo criação de empresa, isolamento entre empresas, pedido, baixa de estoque, financeiro, cancelamento, estorno, auditoria e criação/leitura de convites de equipe.
+O backend foi testado com transações de QA revertidas ao final, cobrindo criação de empresa, isolamento entre empresas, pedido, baixa de estoque, financeiro, cancelamento, estorno, auditoria, criação/leitura de convites de equipe e acesso do backup às tabelas protegidas.
 
 Os arquivos JavaScript e a configuração da Vercel passam por validação de sintaxe. O Supabase Security Advisor está sem alertas de schema/RLS; permanece um aviso de configuração do Auth para habilitar proteção contra senhas vazadas.
 
