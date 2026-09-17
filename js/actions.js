@@ -320,6 +320,28 @@
         if (reset.error) throw reset.error;
         S.toast("Enviamos um link seguro para alterar sua senha.");
       }
+      else if (a === "set-theme") {
+        var nextTheme = b.dataset.theme;
+        if (!S.themeOptions[nextTheme]) throw new Error("Tema inválido.");
+        var previousTheme = S.state.theme;
+        S.applyTheme(nextTheme);
+        var themeSave = await S.sb.from("profiles").update({
+          theme: nextTheme,
+          updated_at: new Date().toISOString()
+        }).eq("id", S.state.session.user.id);
+        if (themeSave.error) {
+          S.applyTheme(previousTheme);
+          throw themeSave.error;
+        }
+        if (S.state.profile) S.state.profile.theme = nextTheme;
+        document.querySelectorAll(".theme-card").forEach(function (card) {
+          var active = card.dataset.theme === nextTheme;
+          card.classList.toggle("selected", active);
+          var check = card.querySelector(".theme-check");
+          if (check) check.textContent = active ? "✓" : "";
+        });
+        S.toast("Tema atualizado.");
+      }
       else if (a === "remove-avatar") {
         var currentPath = S.state.profile && S.state.profile.avatar_path;
         if (!currentPath) return;
