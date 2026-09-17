@@ -1,9 +1,9 @@
 "use strict";
-var CACHE = "system-seller-v20260917-6";
+var CACHE = "system-seller-v20260917-7";
 var SHELL = [
   "/", "/index.html", "/styles.css", "/modular.css", "/config.js",
   "/js/core.js", "/js/time.js", "/js/auth.js", "/js/pages.js", "/js/actions.js",
-  "/js/customer-pricing.js", "/js/offline-sync.js", "/js/order-extensions.js", "/js/payments.js",
+  "/js/customer-pricing.js", "/js/offline-sync.js", "/js/order-extensions.js", "/js/payments.js", "/js/order-special-pricing.js",
   "/js/modular-shell.js", "/js/quotes.js", "/js/production.js", "/js/calendar.js", "/js/offline-cache.js",
   "/js/costs.js", "/js/reports.js", "/js/attachments.js", "/js/three-d-pricing.js", "/js/inventory-3d.js", "/js/notifications.js", "/js/sync-conflicts.js",
   "/js/documents.js", "/js/backup-modular.js", "/js/pwa.js", "/js/three-d-pricing-ui.js", "/js/main.js",
