@@ -72,9 +72,9 @@ jobs:
               raise SystemExit("Missing modular behavior markers: "+", ".join(missing))
           print("Behavior markers OK")
           PY
-      - name: Reject privileged credentials in frontend
+      - name: Reject privileged credential values in frontend
         run: |
-          if grep -R -E "sb_secret_|SUPABASE_SERVICE_ROLE_KEY|BREVO_API_KEY" config.js js index.html service-worker.js manifest.webmanifest; then
-            echo "Privileged credential marker found in frontend"
+          if grep -R -E "sb_secret_|SUPABASE_SERVICE_ROLE_KEY|xkeysib-[A-Za-z0-9_-]{16,}" config.js js index.html service-worker.js manifest.webmanifest; then
+            echo "Privileged credential value marker found in frontend"
             exit 1
           fi
