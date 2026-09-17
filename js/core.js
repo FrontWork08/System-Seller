@@ -24,7 +24,7 @@
     sb: sb,
     app: document.getElementById("app"),
     toastEl: document.getElementById("toast"),
-    state: { session: null, recovery: false, authMarker: authMarker, inviteToken: inviteToken, pendingEmail: null, profile: null, theme: savedTheme, orgs: [], roles: {}, orgId: null, role: null, page: "dashboard", orderQuery: { page: 0, size: 50, search: "", status: "" }, data: {} },
+    state: { session: null, recovery: false, authMarker: authMarker, inviteToken: inviteToken, pendingEmail: null, pendingBackup: null, profile: null, theme: savedTheme, orgs: [], roles: {}, orgId: null, role: null, page: "dashboard", orderQuery: { page: 0, size: 50, search: "", status: "" }, data: {} },
     statusLabel: { new: "Novo", picking: "Separando", packing: "Embalando", ready: "Pronto", shipped: "Enviado", delivered: "Entregue", cancelled: "Cancelado" },
     paymentLabel: { pending: "Pendente", partial: "Parcial", paid: "Pago", refunded: "Reembolsado" },
     transition: { new: "picking", picking: "packing", packing: "ready", ready: "shipped", shipped: "delivered" }
@@ -111,12 +111,13 @@
     return message;
   };
 
-  S.authRedirect = function () {
+  S.authRedirect = function (marker) {
     var base = cfg.productionUrl || window.location.origin;
     var url = new URL(base);
     url.pathname = "/";
     url.hash = "";
     url.search = "";
+    if (marker) url.searchParams.set("auth", marker);
     if (S.state && S.state.inviteToken) url.searchParams.set("invite", S.state.inviteToken);
     return url.toString();
   };
