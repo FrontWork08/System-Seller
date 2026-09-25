@@ -1,5 +1,5 @@
 "use strict";
-var CACHE = "system-seller-v20260925-01";
+var CACHE = "system-seller-v20260925-02";
 var SHELL = [
   "/", "/index.html", "/styles.css", "/modular.css", "/config.js",
   "/js/core.js", "/js/time.js", "/js/auth.js", "/js/pages.js", "/js/actions.js",

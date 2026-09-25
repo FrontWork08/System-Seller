@@ -15,9 +15,16 @@
   };
   if ("serviceWorker" in navigator && location.protocol === "https:") {
     window.addEventListener("load", function () {
-      navigator.serviceWorker.register("/service-worker.js").catch(function (err) {
+      navigator.serviceWorker.register("/service-worker.js?v=20260925-02", { updateViaCache: "none" }).then(function (registration) {
+        return registration.update();
+      }).catch(function (err) {
         console.warn("Service worker", err);
       });
+    });
+    navigator.serviceWorker.addEventListener("controllerchange", function () {
+      if (window.__ssSwReloaded) return;
+      window.__ssSwReloaded = true;
+      window.location.reload();
     });
   }
 })();
