@@ -102,15 +102,39 @@
     }
   }
 
+  var startupComplete = false;
+  var contextPromise = null;
+
+  function withTimeout(promise, ms, label) {
+    return Promise.race([
+      promise,
+      new Promise(function (_, reject) {
+        setTimeout(function () {
+          var err = new Error(label || "Tempo limite excedido ao iniciar o sistema.");
+          err.code = "STARTUP_TIMEOUT";
+          reject(err);
+        }, ms);
+      })
+    ]);
+  }
+
   async function loadContextOrRecover() {
-    try {
-      await S.loadContext();
-      return true;
-    } catch (err) {
-      if (!brokenStoredSession(err)) throw err;
-      recoverToLogin();
-      return false;
-    }
+    if (contextPromise) return contextPromise;
+    contextPromise = (async function () {
+      try {
+        await withTimeout(S.loadContext(), 20000, "O carregamento da conta demorou demais.");
+        return true;
+      } catch (err) {
+        if (brokenStoredSession(err) || err.code === "STARTUP_TIMEOUT") {
+          recoverToLogin();
+          return false;
+        }
+        throw err;
+      } finally {
+        contextPromise = null;
+      }
+    })();
+    return contextPromise;
   }
 
   function announceAuthResult() {
@@ -129,7 +153,7 @@
         if (event === "PASSWORD_RECOVERY") {
           S.state.recovery = true;
           setTimeout(S.renderRecovery, 0);
-        } else if (event === "SIGNED_IN" && session) {
+        } else if (event === "SIGNED_IN" && session && startupComplete) {
           if (S.state.authMarker === "recovery") {
             S.state.recovery = true;
             setTimeout(S.renderRecovery, 0);
@@ -147,7 +171,7 @@
         }
       });
 
-      var boot = await startupSession();
+      var boot = await withTimeout(startupSession(), 12000, "Não foi possível recuperar sua sessão a tempo.");
       S.state.session = boot.session;
       if (S.state.session) {
         if (S.state.authMarker === "recovery") {
@@ -167,7 +191,13 @@
           S.clearAuthMarker();
         }
       }
+      startupComplete = true;
     } catch (err) {
+      startupComplete = true;
+      if (err && err.code === "STARTUP_TIMEOUT") {
+        recoverToLogin();
+        return;
+      }
       S.app.innerHTML = S.empty("Falha ao iniciar o sistema", S.errText(err));
       S.toast(S.errText(err), "error");
     }
