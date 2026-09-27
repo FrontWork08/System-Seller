@@ -1,5 +1,5 @@
 "use strict";
-var CACHE = "system-seller-v20260925-02";
+var CACHE = "system-seller-v20260927-01";
 var SHELL = [
   "/", "/index.html", "/styles.css", "/modular.css", "/config.js",
   "/js/core.js", "/js/time.js", "/js/auth.js", "/js/pages.js", "/js/actions.js",
@@ -9,27 +9,9 @@ var SHELL = [
   "/js/documents.js", "/js/document-permission-guard.js", "/js/backup-modular.js", "/js/pwa.js", "/js/three-d-pricing-ui.js", "/js/main.js",
   "/assets/system-seller-icon.png", "/assets/system-seller-logo.png", "/manifest.webmanifest"
 ];
-var EXTERNAL_RUNTIME = [
-  "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0",
-  "https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"
-];
-
-async function cacheExternalRuntime(cache) {
-  await Promise.all(EXTERNAL_RUNTIME.map(async function (url) {
-    try {
-      var req = new Request(url, { mode: "no-cors", cache: "reload" });
-      var res = await fetch(req);
-      await cache.put(req, res.clone());
-    } catch (err) {
-      // Best effort: the app can still work online and the next controlled visit retries.
-    }
-  }));
-}
-
 self.addEventListener("install", function (event) {
   event.waitUntil(caches.open(CACHE).then(async function (cache) {
     await cache.addAll(SHELL);
-    await cacheExternalRuntime(cache);
   }).then(function () { return self.skipWaiting(); }));
 });
 
@@ -44,20 +26,7 @@ self.addEventListener("fetch", function (event) {
   if (req.method !== "GET") return;
   var url = new URL(req.url);
   var isLocal = url.origin === self.location.origin;
-  var isPinnedCdn = EXTERNAL_RUNTIME.indexOf(url.href) !== -1;
-  if (!isLocal && !isPinnedCdn) return;
-
-  if (isPinnedCdn) {
-    event.respondWith(caches.match(req).then(function (cached) {
-      if (cached) return cached;
-      return fetch(req).then(function (res) {
-        var copy = res.clone();
-        caches.open(CACHE).then(function (cache) { cache.put(req, copy); });
-        return res;
-      });
-    }));
-    return;
-  }
+  if (!isLocal) return;
 
   var isNavigation = req.mode === "navigate" || req.destination === "document";
 
