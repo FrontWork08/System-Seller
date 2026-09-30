@@ -109,6 +109,6 @@ test("normal logout defaults to the current browser instead of global logout", a
 });
 
 test("auth recovery release busts browser and service-worker caches", () => {
-  assert.match(index, /js\/main\.js\?v=20260917-12/);
-  assert.match(sw, /system-seller-v20260917-12/);
+  assert.match(index, /js\/main\.js\?v=20260925-01/);
+  assert.match(sw, /system-seller-v20260927-01/);
 });
