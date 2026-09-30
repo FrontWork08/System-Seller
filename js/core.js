@@ -43,14 +43,37 @@
   };
 
   S.themeCards = function () {
-    return Object.keys(themeOptions).map(function (key) {
+    var container = document.createElement("div");
+    Object.keys(themeOptions).forEach(function (key) {
       var item = themeOptions[key];
-      var active = S.state.theme === key ? " selected" : "";
-      return '<button type="button" class="theme-card' + active + '" data-action="set-theme" data-theme="' + key + '">' +
-        '<span class="theme-preview theme-preview-' + key + '"><i></i><i></i><i></i></span>' +
-        '<span><strong>' + S.e(item.label) + '</strong><small>' + S.e(item.description) + '</small></span>' +
-        '<b class="theme-check">' + (active ? "✓" : "") + '</b></button>';
-    }).join("");
+      var active = S.state.theme === key;
+      var button = document.createElement("button");
+      button.type = "button";
+      button.className = "theme-card" + (active ? " selected" : "");
+      button.dataset.action = "set-theme";
+      button.dataset.theme = key;
+
+      var preview = document.createElement("span");
+      preview.className = "theme-preview theme-preview-" + key;
+      for (var i = 0; i < 3; i++) preview.appendChild(document.createElement("i"));
+      button.appendChild(preview);
+
+      var copy = document.createElement("span");
+      var label = document.createElement("strong");
+      label.textContent = item.label;
+      var description = document.createElement("small");
+      description.textContent = item.description;
+      copy.appendChild(label);
+      copy.appendChild(description);
+      button.appendChild(copy);
+
+      var check = document.createElement("b");
+      check.className = "theme-check";
+      check.textContent = active ? "✓" : "";
+      button.appendChild(check);
+      container.appendChild(button);
+    });
+    return container.innerHTML;
   };
 
   S.e = function (v) {

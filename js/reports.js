@@ -42,7 +42,14 @@
   }
 
   function topRows(map,names){return Object.keys(map).sort(function(a,b){var av=typeof map[a]==='object'?map[a].total:map[a],bv=typeof map[b]==='object'?map[b].total:map[b];return bv-av;}).slice(0,8).map(function(id){var v=map[id],total=typeof v==='object'?v.total:v;return '<div class="list-item"><span>'+S.e(names[id]||'Sem identificação')+'</span><strong>'+S.money(total)+'</strong></div>';}).join('')||'<div class="muted">Sem dados no período.</div>';}
-  function metric(label,value,cls){return '<div class="metric"><small>'+label+'</small><strong'+(cls?' class="'+cls+'"':'')+'>'+value+'</strong></div>';}
+  function metric(label,value,cls){return '<div class="metric"><small>'+S.e(label)+'</small><strong'+(cls?' class="'+S.e(cls)+'"':'')+'>'+S.e(value)+'</strong></div>';}
+  function metricNode(label,value,cls){
+    var item=document.createElement("div");item.className="metric";
+    var small=document.createElement("small");small.textContent=String(label==null?"":label);
+    var strong=document.createElement("strong");strong.textContent=String(value==null?"":value);
+    if(cls==="profit-positive"||cls==="profit-negative")strong.className=cls;
+    item.appendChild(small);item.appendChild(strong);return item;
+  }
 
   S.pageReports=async function(){
     if(!S.canAdmin())throw new Error('Acesso restrito à administração.');
@@ -69,7 +76,17 @@
     if(!S.canAdmin())return;
     try{
       var d=await data({start:firstOfMonth(),end:S.todayIso()}),s=summarize(d),page=document.getElementById('page');if(!page)return;
-      page.insertAdjacentHTML('beforeend','<div class="section-title">Operação e rentabilidade do mês</div><div class="metric-row">'+metric('A receber',S.money(s.receivable))+metric('Lucro bruto',S.money(s.profit),s.profit>=0?'profit-positive':'profit-negative')+metric('Atrasados',s.overdue)+metric('Produção ativa',s.workload)+'</div>');
+      var sectionTitle=document.createElement("div");
+      sectionTitle.className="section-title";
+      sectionTitle.textContent="Operação e rentabilidade do mês";
+      var row=document.createElement("div");
+      row.className="metric-row";
+      row.appendChild(metricNode("A receber",S.money(s.receivable)));
+      row.appendChild(metricNode("Lucro bruto",S.money(s.profit),s.profit>=0?"profit-positive":"profit-negative"));
+      row.appendChild(metricNode("Atrasados",s.overdue));
+      row.appendChild(metricNode("Produção ativa",s.workload));
+      page.appendChild(sectionTitle);
+      page.appendChild(row);
     }catch(e){console.warn('KPI expansion',e);}
   };
 })();

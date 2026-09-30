@@ -80,6 +80,146 @@
       '<div class="statline"><span>Lucro estimado no preço final</span><strong data-3d-out="profit">R$ 0,00</strong></div>';
   }
 
+  function makeField(labelText, control, wide) {
+    var field = document.createElement("div");
+    field.className = wide ? "field span2" : "field";
+    var label = document.createElement("label");
+    label.textContent = labelText;
+    field.appendChild(label);
+    field.appendChild(control);
+    return field;
+  }
+
+  function makeNumberInput(name, value, step, max) {
+    var input = document.createElement("input");
+    input.name = name;
+    input.type = "number";
+    input.min = "0";
+    input.step = String(step);
+    if (max != null) input.max = String(max);
+    input.value = value == null ? "" : String(value);
+    return input;
+  }
+
+  function createConfigWarningNode(cfg) {
+    var missing = [];
+    if (num(cfg.electricity_price_per_kwh) <= 0) missing.push("energia");
+    if (num(cfg.printer_power_watts) <= 0) missing.push("potência da impressora");
+    if (num(cfg.machine_hour_cost) <= 0) missing.push("custo/hora da máquina");
+    if (num(cfg.labor_hour_cost) <= 0) missing.push("mão de obra");
+    if (!missing.length) return null;
+    var notice = document.createElement("div");
+    notice.className = "notice warning";
+    var title = document.createElement("strong");
+    title.textContent = "Configuração parcial";
+    var detail = document.createElement("div");
+    detail.className = "muted";
+    detail.textContent = "Preencha " + missing.join(", ") + " em Configurações para o custo automático ficar completo.";
+    notice.appendChild(title);
+    notice.appendChild(detail);
+    return notice;
+  }
+
+  function buildBreakdownNode() {
+    var root = document.createElement("div");
+    var heading = document.createElement("div");
+    heading.className = "section-title";
+    heading.textContent = "Resultado automático";
+    root.appendChild(heading);
+
+    var row = document.createElement("div");
+    row.className = "metric-row";
+    [["Material", "material"], ["Energia", "energy"], ["Máquina", "machine"], ["Mão de obra", "labor"]].forEach(function (item) {
+      var metric = document.createElement("div");
+      metric.className = "metric";
+      var label = document.createElement("small");
+      label.textContent = item[0];
+      var value = document.createElement("strong");
+      value.setAttribute("data-3d-out", item[1]);
+      value.textContent = "R$ 0,00";
+      metric.appendChild(label);
+      metric.appendChild(value);
+      row.appendChild(metric);
+    });
+    root.appendChild(row);
+
+    [["Custo estimado", "cost"], ["Preço sugerido", "suggested"], ["Preço final", "final"], ["Lucro estimado no preço final", "profit"]].forEach(function (item) {
+      var line = document.createElement("div");
+      line.className = "statline";
+      var label = document.createElement("span");
+      label.textContent = item[0];
+      var value = document.createElement("strong");
+      value.setAttribute("data-3d-out", item[1]);
+      value.textContent = "R$ 0,00";
+      line.appendChild(label);
+      line.appendChild(value);
+      root.appendChild(line);
+    });
+    return root;
+  }
+
+  function buildOrderPricingSection(cfg, rolls, d, old, selectedRoll, costPerG) {
+    var section = document.createElement("div");
+    section.className = "three-d-order-pricing";
+    var heading = document.createElement("div");
+    heading.className = "section-title";
+    heading.textContent = "Precificação automática";
+    section.appendChild(heading);
+
+    var warning = createConfigWarningNode(cfg);
+    if (warning) section.appendChild(warning);
+
+    var grid = document.createElement("div");
+    grid.className = "form-grid";
+    var rollSelect = document.createElement("select");
+    rollSelect.name = "pricing_filament_roll_id";
+    var emptyOption = document.createElement("option");
+    emptyOption.value = "";
+    emptyOption.textContent = "Sem rolo / custo manual";
+    rollSelect.appendChild(emptyOption);
+    rolls.forEach(function (roll) {
+      var option = document.createElement("option");
+      option.value = String(roll.id == null ? "" : roll.id);
+      option.dataset.costPerG = String(rollCostPerGram(roll));
+      option.dataset.material = String(roll.material || "");
+      option.dataset.color = String(roll.color || "");
+      option.textContent = (roll.material || "Material") + " · " + (roll.color || "Sem cor") +
+        (roll.brand ? " · " + roll.brand : "") + " · " + num(roll.remaining_weight_g).toFixed(0) + " g";
+      if (String(roll.id) === String(selectedRoll)) option.selected = true;
+      rollSelect.appendChild(option);
+    });
+    rollSelect.value = selectedRoll ? String(selectedRoll) : "";
+    grid.appendChild(makeField("Rolo/material para o cálculo", rollSelect, true));
+
+    grid.appendChild(makeField("Material estimado (g)", makeNumberInput("pricing_estimated_material_g", num(d.estimated_material_g, num(old.material_g)), "0.01")));
+    grid.appendChild(makeField("Custo do material por g", makeNumberInput("pricing_material_cost_per_g", num(costPerG).toFixed(4), "0.0001")));
+    grid.appendChild(makeField("Mão de obra/acabamento (min)", makeNumberInput("pricing_labor_minutes", num(d.labor_minutes, num(old.labor_minutes)), "1")));
+    grid.appendChild(makeField("Margem desejada (%)", makeNumberInput("pricing_margin_pct", num(d.pricing_margin_pct, num(old.margin_pct, num(cfg.default_3d_margin_pct, 30))), "0.01", "99.99")));
+
+    var finalInput = makeNumberInput("pricing_final_price", d.final_price == null ? "" : num(d.final_price).toFixed(2), "0.01");
+    var finalField = makeField("Preço final", finalInput);
+    var useSuggested = document.createElement("button");
+    useSuggested.className = "ghost mini";
+    useSuggested.type = "button";
+    useSuggested.dataset.threeDAction = "use-order-suggested";
+    useSuggested.textContent = "Usar sugerido";
+    finalField.appendChild(useSuggested);
+    grid.appendChild(finalField);
+
+    section.appendChild(grid);
+    section.appendChild(buildBreakdownNode());
+
+    var note = document.createElement("div");
+    note.className = "note";
+    note.appendChild(document.createTextNode("O valor é salvo como histórico do trabalho 3D. Ele não reescreve automaticamente pedidos antigos; em novos pedidos/orçamentos use o botão "));
+    var emphasis = document.createElement("strong");
+    emphasis.textContent = "Calcular preço 3D";
+    note.appendChild(emphasis);
+    note.appendChild(document.createTextNode(" no item."));
+    section.appendChild(note);
+    return section;
+  }
+
   function buildInput(form, cfg, finalName) {
     var rollSelect = form.elements.filament_roll_id || form.elements.pricing_filament_roll_id;
     var option = rollSelect && rollSelect.selectedOptions ? rollSelect.selectedOptions[0] : null;
@@ -297,7 +437,10 @@
         if (!d || d.final_price == null) return;
         var parent = button.parentElement;
         if (parent && !parent.querySelector('.three-d-price-summary')) {
-          parent.insertAdjacentHTML('beforeend', '<small class="muted three-d-price-summary">Custo ' + money(d.estimated_cost) + ' · sugerido ' + money(d.suggested_price) + ' · final ' + money(d.final_price) + '</small>');
+          var summary = document.createElement("small");
+          summary.className = "muted three-d-price-summary";
+          summary.textContent = "Custo " + money(d.estimated_cost) + " · sugerido " + money(d.suggested_price) + " · final " + money(d.final_price);
+          parent.appendChild(summary);
         }
       });
     };
@@ -316,19 +459,10 @@
     var selectedRoll = old.filament_roll_id || '';
     var costPerG = old.material_cost_per_g;
     if (costPerG == null && selectedRoll) costPerG = rollCostPerGram(rolls.find(function (r) { return r.id === selectedRoll; }));
-    var html = '<div class="three-d-order-pricing"><div class="section-title">Precificação automática</div>' + configWarning(cfg) +
-      '<div class="form-grid">' +
-      '<div class="field span2"><label>Rolo/material para o cálculo</label><select name="pricing_filament_roll_id">' + rollOptions(rolls, selectedRoll) + '</select></div>' +
-      '<div class="field"><label>Material estimado (g)</label><input name="pricing_estimated_material_g" type="number" min="0" step="0.01" value="' + num(d.estimated_material_g, num(old.material_g)) + '"></div>' +
-      '<div class="field"><label>Custo do material por g</label><input name="pricing_material_cost_per_g" type="number" min="0" step="0.0001" value="' + num(costPerG).toFixed(4) + '"></div>' +
-      '<div class="field"><label>Mão de obra/acabamento (min)</label><input name="pricing_labor_minutes" type="number" min="0" step="1" value="' + num(d.labor_minutes, num(old.labor_minutes)) + '"></div>' +
-      '<div class="field"><label>Margem desejada (%)</label><input name="pricing_margin_pct" type="number" min="0" max="99.99" step="0.01" value="' + num(d.pricing_margin_pct, num(old.margin_pct, num(cfg.default_3d_margin_pct, 30))) + '"></div>' +
-      '<div class="field"><label>Preço final</label><input name="pricing_final_price" type="number" min="0" step="0.01" value="' + (d.final_price == null ? '' : num(d.final_price).toFixed(2)) + '"><button class="ghost mini" type="button" data-three-d-action="use-order-suggested">Usar sugerido</button></div>' +
-      '</div>' + breakdownHtml() +
-      '<div class="note">O valor é salvo como histórico do trabalho 3D. Ele não reescreve automaticamente pedidos antigos; em novos pedidos/orçamentos use o botão <strong>Calcular preço 3D</strong> no item.</div></div>';
+    var pricingSection = buildOrderPricingSection(cfg, rolls, d, old, selectedRoll, costPerG);
     var submit = form.querySelector('button[type="submit"]');
-    if (submit) submit.insertAdjacentHTML('beforebegin', html);
-    else form.insertAdjacentHTML('beforeend', html);
+    if (submit && submit.parentNode) submit.parentNode.insertBefore(pricingSection, submit);
+    else form.appendChild(pricingSection);
     if (d.final_price != null) form.elements.pricing_final_price.dataset.manual = '1';
     form.dataset.pricingConfig = encodeSnapshot(cfg);
     form.dataset.pricingRolls = encodeSnapshot(rolls);

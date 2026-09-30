@@ -1,0 +1,12 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Supabase publishable keys are intended for client-side use and are not privileged secrets."
+regexTarget = "secret"
+regexes = [
+  '''sb_publishable_[A-Za-z0-9_-]+''',
+]
+paths = [
+  '''(^|/)config\.js$''',
+]

@@ -10,8 +10,8 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24
       - name: Unit tests
@@ -82,3 +82,44 @@ jobs:
             echo "Privileged credential value marker found in frontend"
             exit 1
           fi
+      - name: Security regression checks
+        run: |
+          python - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+
+          for workflow in [".github/workflows/pages.yml", ".github/workflows/validate.yml"]:
+              for number, line in enumerate(Path(workflow).read_text().splitlines(), 1):
+                  if line.lstrip().startswith("- uses:"):
+                      ref = line.split("@", 1)[1].split()[0]
+                      if not re.fullmatch(r"[0-9a-f]{40}", ref):
+                          raise SystemExit(f"Mutable action reference in {workflow}:{number}")
+
+          html = Path("index.html").read_text()
+          scripts = [tag for tag in re.findall(r"<script[^>]*>", html, re.I) if 'src="https://cdn.jsdelivr.net' in tag]
+          if len(scripts) != 2:
+              raise SystemExit(f"Expected 2 pinned CDN scripts, found {len(scripts)}")
+          for tag in scripts:
+              if 'integrity="sha256-' not in tag:
+                  raise SystemExit("CDN script missing SRI integrity")
+              if 'crossorigin="anonymous"' not in tag:
+                  raise SystemExit("CDN script missing crossorigin=anonymous")
+
+          marker = '<meta http-equiv="Content-Security-Policy"'
+          start = html.find(marker)
+          if start < 0:
+              raise SystemExit("index.html CSP meta tag missing")
+          meta_tag = html[start:html.find(">", start) + 1]
+          meta_policy = meta_tag.split('content="', 1)[1].split('"', 1)[0]
+          config = json.loads(Path("vercel.json").read_text())
+          header_policy = next(h["value"] for rule in config["headers"] for h in rule["headers"] if h["key"] == "Content-Security-Policy")
+          def directive(policy, name):
+              return next((part.strip() for part in policy.split(";") if part.strip().startswith(name + " ")), "")
+          if directive(meta_policy, "connect-src") != directive(header_policy, "connect-src"):
+              raise SystemExit("CSP connect-src differs between index.html and vercel.json")
+
+          if "Math.random" in Path("js/offline-sync.js").read_text():
+              raise SystemExit("Insecure Math.random remains in offline ID generation")
+          print("Security regression checks OK")
+          PY
